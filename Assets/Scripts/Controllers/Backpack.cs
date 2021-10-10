@@ -34,7 +34,7 @@ public class Backpack
     //    return addItem(in_item);
     //}
 
-    public bool localCreateItem(string in_binder, string getItemName, int in_amount)
+    public bool localCreateItem(string getItemName, int in_amount)
     {
         ItemExistanceDTOWrapper getItem = ItemFactory.createItem(getItemName);
         if (getItem == null) return false;
@@ -76,6 +76,7 @@ public class Backpack
         ItemExistanceDTOWrapper out_item = items.Find(x => x.ItemObj.itemName.Equals(in_item.ItemObj.itemName));
         if (out_item != null)
         {
+            Debug.Log(out_item.ItemObj.quantity + " , " + in_item.ItemObj.quantity);
             out_item.ItemObj.quantity += in_item.ItemObj.quantity;
             return true;
         }

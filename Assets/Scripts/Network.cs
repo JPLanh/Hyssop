@@ -51,7 +51,7 @@ public class Network : MonoBehaviour
     public static Queue<List<EntityDTO>> listOfCharacter = new Queue<List<EntityDTO>>();
     public static Queue<List<WorldDTO>> listOfWorlds = new Queue<List<WorldDTO>>();
     public static Queue<List<ItemExistanceDTOWrapper>> listOfItems = new Queue<List<ItemExistanceDTOWrapper>>();
-    public static Queue<string> serverAcknowledge = new Queue<string>();
+    public static Queue<Dictionary<string, string>> serverAcknowledge = new Queue<Dictionary<string, string>>();
     public static Queue<AreaDTO> areaConfig = new Queue<AreaDTO>();
     public static Queue<List<AreaIndexDTO>> listOfAreaIndexes = new Queue<List<AreaIndexDTO>>();
     public static Queue<List<AreaItemDTO>> listOfAreaItems = new Queue<List<AreaItemDTO>>();
@@ -61,7 +61,6 @@ public class Network : MonoBehaviour
     public static Queue<ItemExistanceDTOWrapper> itemRetrieved = new Queue<ItemExistanceDTOWrapper>();
 
     public static bool debug = false;
-    public static string state;
 
     // Start is called before the first frame update
     void Start()
@@ -90,7 +89,6 @@ public class Network : MonoBehaviour
 
         try
         {
-            //            GameObject.Find("Listener").GetComponent<LoginServerListener>().alert.GetComponent<Alert>().Show("Connecting", 5f);
             socket = IO.Socket("http://35.212.249.77:26843");
         }
         catch (Exception e)
@@ -113,7 +111,6 @@ public class Network : MonoBehaviour
                         payload["Actual"] = out_actual;
                         payload["Action"] = "Login";
                         emitQueues.Enqueue(new emitQueue(socket, "Login", JsonConvert.SerializeObject(payload)));
-                        //                        socket.Emit("Login", JsonConvert.SerializeObject(payload));
                         break;
                     case "Register":
                         Dictionary<string, string> create_payload = new Dictionary<string, string>();
@@ -122,7 +119,6 @@ public class Network : MonoBehaviour
                         create_payload["Actual"] = out_actual;
                         create_payload["Action"] = "Create user";
                         emitQueues.Enqueue(new emitQueue(socket, "Login", JsonConvert.SerializeObject(create_payload)));
-                        //                      socket.Emit("Login", JsonConvert.SerializeObject(create_payload));
                         break;
                 }
             }
@@ -136,349 +132,6 @@ public class Network : MonoBehaviour
         {
             Debug.Log("Disconnectiong");
         });
-
-        //socket.On("Item", (getData) =>
-        //{
-        //    string data = getData.ToString().Replace('`', '"');
-        //    print(data);
-        //    try
-        //    {
-        //        ItemWrapper json = JsonConvert.DeserializeObject<ItemWrapper>(data);
-        //        itemWrappers.Enqueue(json);
-
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        Debug.Log(e.StackTrace);
-        //    }
-        //});
-
-        //socket.On("Area", (getData) =>
-        //{
-        //    string data = getData.ToString().Replace('`', '"');
-        //    try
-        //    {
-        //        gridIndexDtoWrapper json = JsonConvert.DeserializeObject<gridIndexDtoWrapper>(getData.ToString().Replace('`', '"'));
-        //        indexWrapper.Enqueue(json);
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        print(e.Message);
-        //        print(e.Source);
-        //        print(e.StackTrace);
-        //    }
-        //});
-
-        //socket.On("Load Plant", (getData) =>
-        //{
-        //    string data = getData.ToString().Replace('`', '"');
-        //    //            print(data);
-        //    try
-        //    {
-        //        gridIndexPlantWrapper json = JsonConvert.DeserializeObject<gridIndexPlantWrapper>(getData.ToString().Replace('`', '"'));
-        //        areaIndexPlantWrapper.Enqueue(json);
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        print(e.Message);
-        //        print(e.StackTrace);
-        //    }
-        //});
-
-        //socket.On("Load worlds", (getData) =>
-        //{
-        //    string data = getData.ToString().Replace('`', '"');
-        //    //            print(data);
-        //    try
-        //    {
-        //        WorldListWrapper json = JsonConvert.DeserializeObject<WorldListWrapper>(getData.ToString().Replace('`', '"'));
-        //        worldListWrapper.Enqueue(json);
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        print(e.StackTrace);
-        //    }
-        //});
-
-        //socket.On("Action Index", (getData) =>
-        //{
-        //    string data = getData.ToString().Replace('`', '"');
-        //    print(data);
-        //    try
-        //    {
-        //        ActionWrapper json = JsonConvert.DeserializeObject<ActionWrapper>(data);
-        //        actionRetrieved.Enqueue(json);
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        print(e.StackTrace);
-        //    }
-        //});
-
-        //socket.On("Load world", (getData) =>
-        //{
-        //    string data = getData.ToString().Replace('`', '"');
-        //    //            print(data);
-        //    try
-        //    {
-        //        WorldDTO json = JsonConvert.DeserializeObject<WorldDTO>(data);
-        //        worldRetrieved.Enqueue(json);
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        print(e.StackTrace);
-        //    }
-        //});
-
-        //socket.On("Load area plant", (getData) =>
-        //{
-        //    string data = getData.ToString().Replace('`', '"');
-        //    try
-        //    {
-        //        allGridIndexPlantWrapper json = JsonConvert.DeserializeObject<allGridIndexPlantWrapper>(data);
-        //        listAreaIndexPlantWrapper.Enqueue(json);
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        print(e.Message);
-        //        print(e.StackTrace);
-        //    }
-        //});
-
-        //socket.On("Character updates", (getData) =>
-        //{
-        //    //            string data = getData.ToString().Replace('`', '"');
-        //    ////            print(data);
-        //    //            try
-        //    //            {
-        //    //                characterListWrapper newWrapper = JsonConvert.DeserializeObject<characterListWrapper>(data);
-        //    //                characterNetworkUpdate.Enqueue(newWrapper);
-        //    //            }
-        //    //            catch (Exception e)
-        //    //            {
-        //    //                print(e.StackTrace);
-        //    //            }
-        //});
-
-        ////socket.On("Area Update", (getData) =>
-        ////{
-        ////    string data = getData.ToString().Replace('`', '"');
-        ////    try
-        ////    {
-        ////        areaIndexDTO json = JsonConvert.DeserializeObject<areaIndexDTO>(getData.ToString().Replace('`', '"'));
-        ////        gridIndexUpdator.Enqueue(json);
-        ////    }
-        ////    catch (Exception e)
-        ////    {
-        ////        print(e.StackTrace);
-        ////    }
-        ////});
-
-        ////socket.On("Load area item", (getData) =>
-        ////{
-        ////    try
-        ////    {
-        ////        areaListItemWrapperDTO json = JsonConvert.DeserializeObject<areaListItemWrapperDTO>(getData.ToString().Replace('`', '"'));
-        ////        areaItemWrapper.Enqueue(json);
-        ////    }
-        ////    catch (Exception e)
-        ////    {
-        ////        print(e.Message);
-        ////    }
-        ////});
-
-        ////socket.On("Load area NPC", (getData) =>
-        ////{
-        ////    print(getData);
-
-        ////    try
-        ////    {
-        ////        networkListReceiver<EntityDTOWrapper> json = JsonConvert.DeserializeObject<networkListReceiver<EntityDTOWrapper>>(getData.ToString().Replace('`', '"'));
-        ////        listOfNPC.Enqueue(json);
-        ////    }
-        ////    catch (Exception e)
-        ////    {
-        ////        print(e.Message);
-        ////    }
-        ////});
-
-        //socket.On("Action", (getData) =>
-        //{
-        //    Dictionary<string, string> json = JsonConvert.DeserializeObject<Dictionary<string, string>>(getData.ToString().Replace('`', '"'));
-        //    serverResponse.Enqueue(json);
-        //});
-
-        //socket.On("Load plant database", (getData) =>
-        //{
-        //    string data = getData.ToString().Replace('`', '"');
-        //    //            print(data);
-        //    try
-        //    {
-        //        plantDatabaseWrapper json = JsonConvert.DeserializeObject<plantDatabaseWrapper>(data);
-        //        listOfPlantDatabase.Enqueue(json);
-
-        //    }
-        //    catch (JsonException ex)
-        //    {
-        //        print("Json error");
-        //        print(ex.Data);
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        print(e.Message);
-        //    }
-        //});
-
-        //socket.On("Load item database", (getData) =>
-        //{
-        //    string data = getData.ToString().Replace('`', '"');
-        //    //            print(data);
-        //    try
-        //    {
-        //        itemDatabaseWrapper json = JsonConvert.DeserializeObject<itemDatabaseWrapper>(data);
-        //        listOfItemDatabase.Enqueue(json);
-        //    }
-        //    catch (JsonException ex)
-        //    {
-        //        print("Json error");
-        //        print(ex.Data);
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        print(e.Message);
-        //    }
-        //});
-
-        ////socket.On("Load storage access", (getData) =>
-        ////{
-        ////    string data = getData.ToString().Replace('`', '"');
-        ////    try { 
-        ////        StorageItemListWrapper json = JsonConvert.DeserializeObject<StorageItemListWrapper>(data);
-        ////        listOfStorageItem.Enqueue(json);
-        ////    }
-        ////    catch (Socket.Newtonsoft.Json.JsonException ex)
-        ////    {
-        ////        print("Json error");
-        ////        print(ex.Data);
-        ////    }
-        ////    catch (Exception e)
-        ////    {
-        ////        print(e.Message);
-        ////    }
-        ////});
-
-        ////socket.On("Get Item List", (getData) =>
-        ////{
-        ////    string data = getData.ToString().Replace('`', '"');
-
-        ////    try
-        ////    {
-        ////        networkListReceiver<ItemExistanceDTOWrapper> newWrapper = JsonConvert.DeserializeObject<networkListReceiver<ItemExistanceDTOWrapper>>(data);
-        ////        itemRetrieved.Enqueue(newWrapper);
-        ////    }
-        ////    catch (Socket.Newtonsoft.Json.JsonException ex)
-        ////    {
-        ////        print("Json error");
-        ////        print(ex.Data);
-        ////    }
-        ////    catch (Exception e)
-        ////    {
-        ////        print(e.Message);
-        ////    }
-        ////});
-
-        //socket.On("Transfer Item", (getData) =>
-        //{
-        //    string data = getData.ToString().Replace('`', '"');
-
-        //    try
-        //    {
-        //        ItemExistanceDTOWrapper newWrapper = JsonConvert.DeserializeObject<ItemExistanceDTOWrapper>(data);
-        //        itemRetrieved.Enqueue(newWrapper);
-        //    }
-        //    catch (JsonException ex)
-        //    {
-        //        print("Json error");
-        //        print(ex.Data);
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        print(e.Message);
-        //    }
-        //});
-
-        //socket.On("Get Item", (getData) =>
-        //{
-        //    string data = getData.ToString().Replace('`', '"');
-        //    print(data);
-        //    try
-        //    {
-        //        ItemExistanceDTOWrapper newWrapper = JsonConvert.DeserializeObject<ItemExistanceDTOWrapper>(data);
-        //        itemRetrieved.Enqueue(newWrapper);
-        //    }
-        //    catch (JsonException ex)
-        //    {
-        //        print("Json error");
-        //        print(ex.Data);
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        print(e.Message);
-        //    }
-        //});
-
-        //socket.On("Load Items", (getData) =>
-        //{
-        //    string data = getData.ToString().Replace('`', '"');
-        //    print(data);
-        //    try
-        //    {
-        //        ItemExistanceWrapper newWrapper = JsonConvert.DeserializeObject<ItemExistanceWrapper>(data);
-        //        listOfCharacersItem.Enqueue(newWrapper);
-        //    }
-        //    catch (JsonException ex)
-        //    {
-        //        print("Json error");
-        //        print(ex.Data);
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        print(e.Message);
-        //    }
-        //});
-
-        //socket.On("Load characters", (getData) =>
-        //{
-        //    string data = getData.ToString().Replace('`', '"');
-        //    //            print(data);
-        //    try
-        //    {
-        //        var newWrapper = JsonConvert.DeserializeObject<characterListWrapper>(data);
-        //        listOfCharacters.Enqueue(newWrapper);
-        //    }
-        //    catch (JsonException ex)
-        //    {
-        //        print("Json error");
-        //        print(ex.Data);
-        //    }
-        //    catch (Exception e)
-        //    {
-        //        print(e.Message);
-        //        //print(e.StackTrace);
-        //        //string entityName = data.Substring(62);
-        //        //entityName = entityName.Substring(0,entityName.IndexOf('"'));
-        //        //Dictionary<string, string> payload = new Dictionary<string, string>();
-        //        //payload.Add("Username", Network.Username);
-        //        //payload.Add("entityName", entityName);
-        //        //payload.Add("Action", "Corrupted");
-        //        //Network.doLogin(payload);
-        //    }
-        //});
-
-        //socket.On("Mass Update", (getData) =>
-        //{
-        //    updateResponseInterpolation.Push(getData.ToString().Replace('`', '"'));
-        //});
 
         socket.On("Get Data", (getData) =>
         {
@@ -500,9 +153,26 @@ public class Network : MonoBehaviour
 
     }
 
-    /**
-     *  Relay to everyone
-     */
+    public static void doSaveImmediate<T>(string in_mode, T in_data)
+    {
+
+        Dictionary<string, string> payload = new Dictionary<string, string>();
+        payload["command"] = in_mode;
+        payload["input"] = "Player";
+        payload["username"] = Username;
+        if (loadedCharacter != null)
+        {
+            payload["entity"] = loadedCharacter.entityName;
+        }
+        if (loadedWorld != null)
+        {
+            payload["worldName"] = Network.loadedWorld.worldName;
+        }
+        payload["data"] = JsonConvert.SerializeObject(in_data, settings);
+
+        socket.Emit("Packet", JsonConvert.SerializeObject(payload));
+    }
+
     public static void trade(string in_from_type, string in_from_name, string in_to_type, string in_to_name, string in_name, int in_quantity)
     {
         Dictionary<string, string> payload = new Dictionary<string, string>();
@@ -512,99 +182,15 @@ public class Network : MonoBehaviour
         payload["toName"] = in_to_name;
         payload["item"] = in_name;
         payload["quantity"] = in_quantity.ToString();
-        emitQueues.Enqueue(new emitQueue(socket, "Trade", JsonConvert.SerializeObject(payload)));
-        //        socket.Emit("Trade", JsonConvert.SerializeObject(payload));
+        Network.sendPacket(doCommands.action, "Trade", payload);
     }
 
-    public static void doSave<T>(string in_mode, T in_data)
-    {
-        Dictionary<string, string> payload = new Dictionary<string, string>();
-        payload.Add("Data", JsonConvert.SerializeObject(in_data, settings));
-        if (loadedWorld != null)
-        {
-            payload["worldName"] = Network.loadedWorld.worldName;
-        }
-        emitQueues.Enqueue(new emitQueue(socket, "Save " + in_mode, JsonConvert.SerializeObject(payload)));
-        //        socket.Emit("Save " + in_mode, JsonConvert.SerializeObject(payload));
-    }
-
-    public static void doAction<T>(string in_mode, T in_data)
-    {
-        Dictionary<string, string> payload = new Dictionary<string, string>();
-        payload.Add("Data", JsonConvert.SerializeObject(in_data, settings));
-        if (loadedWorld != null)
-        {
-            payload["worldName"] = Network.loadedWorld.worldName;
-        }
-        emitQueues.Enqueue(new emitQueue(socket, "Action " + in_mode, JsonConvert.SerializeObject(payload)));
-    }
-
-    public static void doSaveImmediate<T>(string in_mode, T in_data)
-    {
-        Dictionary<string, string> payload = new Dictionary<string, string>();
-        payload.Add("Data", JsonConvert.SerializeObject(in_data, settings));
-        if (loadedWorld != null)
-        {
-
-            payload["worldName"] = Network.loadedWorld.worldName;
-        }
-        //        new emitQueue(socket, "Save " + in_mode, JsonConvert.SerializeObject(payload));
-
-        socket.Emit("Save " + in_mode, JsonConvert.SerializeObject(payload));
-    }
-
-    public static void doLoad<T>(string in_mode, T in_data)
-    {
-        Dictionary<string, string> payload = new Dictionary<string, string>();
-        payload["worldName"] = Network.loadedWorld.worldName;
-        payload.Add("Data", JsonConvert.SerializeObject(in_data, settings));
-        emitQueues.Enqueue(new emitQueue(socket, "Load " + in_mode, JsonConvert.SerializeObject(payload)));
-
-        //      socket.Emit("Load " + in_mode, JsonConvert.SerializeObject(payload));
-    }
-    public static void accessStorage(string in_mode, string in_data)
-    {
-        Dictionary<string, string> payload = new Dictionary<string, string>();
-        payload.Add("Data", in_data);
-        emitQueues.Enqueue(new emitQueue(socket, "Access " + in_mode, JsonConvert.SerializeObject(payload)));
-        //        socket.Emit("Access " + in_mode, JsonConvert.SerializeObject(payload));
-    }
-    public static void doLoading(string in_input)
-    {
-        Dictionary<string, string> payload = new Dictionary<string, string>();
-        payload["Username"] = loadedCharacter.entityName;
-        payload["World"] = loadedWorld.worldName;
-        payload["Action"] = in_input;
-        emitQueues.Enqueue(new emitQueue(socket, "Loading", JsonConvert.SerializeObject(payload)));
-        //        socket.Emit("Loading", JsonConvert.SerializeObject(payload));
-    }
-    public static void doShop(string in_target, string in_input)
-    {
-        Dictionary<string, string> payload = new Dictionary<string, string>();
-        payload["Target"] = in_target;
-        payload["Username"] = loadedCharacter.entityName;
-        payload["World"] = loadedWorld.worldName;
-        payload["Action"] = in_input;
-        emitQueues.Enqueue(new emitQueue(socket, "Shop", JsonConvert.SerializeObject(payload)));
-        //        socket.Emit("Loading", JsonConvert.SerializeObject(payload));
-    }
     public static void doLogin(Dictionary<string, string> in_payload)
     {
         emitQueues.Enqueue(new emitQueue(socket, "Login", JsonConvert.SerializeObject(in_payload)));
-        //        socket.Emit("Login", JsonConvert.SerializeObject(in_payload));
     }
     #endregion
 
-    public static void areaItemInteract(AreaItemDTO in_payload, string in_action)
-    {
-        Dictionary<string, string> payload = new Dictionary<string, string>();
-        payload["entity"] = loadedCharacter.entityName;
-        payload["item"] = JsonConvert.SerializeObject(in_payload, settings);
-        payload["input"] = in_action;
-        payload["command"] = "Action";
-        emitQueues.Enqueue(new emitQueue(socket, "Packet", JsonConvert.SerializeObject(payload)));
-//        emitQueues.Enqueue(new emitQueue(socket, "Update area item", JsonConvert.SerializeObject(in_payload, settings)));
-    }
 
     public static void itemUpdated(string in_command, string in_action, string in_item, int in_amount)
     {
@@ -634,7 +220,7 @@ public class Network : MonoBehaviour
         {
             payload["worldName"] = Network.loadedWorld.worldName;
         }
-        payload["data"] = JsonConvert.SerializeObject(in_wrapper);
+        payload["data"] = JsonConvert.SerializeObject(in_wrapper, settings);
 
         emitQueues.Enqueue(new emitQueue(socket, "Packet", JsonConvert.SerializeObject(payload)));
     }
@@ -743,7 +329,7 @@ public class packetData
             switch (type)
             {
                 case "Acknowledge":
-                    processPacketHelper<string>(Network.serverAcknowledge);
+                    processPacketHelper<Dictionary<string, string>>(Network.serverAcknowledge);
                     break;
                 case "Character list":
                     processPacketHelper<List<EntityDTO>>(Network.listOfCharacter);
@@ -751,6 +337,7 @@ public class packetData
                 case "World list":
                     processPacketHelper<List<WorldDTO>>(Network.listOfWorlds);
                     break;
+                case "Storage":
                 case "Item list":
                     processPacketHelper<List<ItemExistanceDTOWrapper>>(Network.listOfItems);
                     break;
@@ -784,6 +371,7 @@ public class packetData
                 case "Item":
                     processPacketHelper<ItemExistanceDTOWrapper>(Network.itemRetrieved);
                     break;
+
             }
         }
         catch (Exception e)
@@ -809,7 +397,11 @@ public static class doCommands
     public static String preload { get { return "Preload"; } }
     public static String load { get { return "Load"; } }
     public static String action { get { return "Action"; } }
+    public static String item { get { return "Item"; } }
     public static String playerItem { get { return "Player Item"; } }
     public static String entityItem { get { return "Entity Item"; } }
     public static String area { get { return "Area"; } }
+    public static string storage { get { return "Storage"; } }
+    public static string world { get { return "World"; } }
+    public static string index { get { return "Index"; } }
 }

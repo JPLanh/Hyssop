@@ -22,7 +22,7 @@ public class AreaGenerator
         generateBasicPath(in_grid);
         generateBasicFarmLight(in_grid, new Vector3(13, 2, 0), new Vector3(11, 10, 5));
         createTutorial(in_grid);
-        in_grid.buildable = true;
+        in_grid.area.buildable = true;
         GameObject shippingBin = in_grid.spawnNewStorage(in_grid.getGridAtLocation(3, 13, 0), Quaternion.Euler(0f, 90f, 0f), "Basic Shipping Bin", "Shipping Bin");
         GameObject mailbox = in_grid.spawnNewStorage(in_grid.getGridAtLocation(3, 8, 0), Quaternion.Euler(0f, 90f, 0f), "Basic Mailbox", "Mailbox");
         if (shippingBin.TryGetComponent<StorageEntity>(out StorageEntity out_storage))
@@ -158,7 +158,7 @@ public class AreaGenerator
         in_grid.createNewGrid(in_length, in_width, in_height, in_name);
         in_grid.generateIndexes();
         in_grid.generateBorder();
-        in_grid.buildable = false;
+        in_grid.area.buildable = false;
         generateCentralHubParameter(in_grid, "Wooden Fence", in_length, in_width, in_height);
         generateCentralHubPath(in_grid);
         generateBasicShop(in_grid, new Vector3(2, 2, 0), new Vector3(20, 22, 4), "North");

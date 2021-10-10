@@ -39,10 +39,28 @@ exports.processPacket = async function(in_broadcast_socket, in_socket, in_param)
 			processLoad(in_socket, in_param);
 			break;		
 		case "Action":
-			processAction(in_broadcast_socket, in_param);
+			processAction(in_broadcast_socket, in_socket, in_param);
 			break;
 		case "Player Item":
+			processPlayerItem(in_socket, in_param);
+			break;
+		case "Item":
 			processItem(in_socket, in_param);
+			break;
+		case "Area":
+			processArea(in_socket, in_param);
+			break;
+		case "Storage":
+			processStorage(in_socket, in_param);
+			break;
+		case "World":
+			processWorld(in_broadcast_socket, in_socket, in_param);
+			break;
+		case "Index":
+			processIndex(in_broadcast_socket, in_socket, in_param);
+			break;
+		case "Entity":
+			processEntity(in_socket, in_param);
 			break;
 	}
 }
@@ -62,7 +80,7 @@ async function sendPacket(in_socket, in_type, in_data)
 async function processMainMenu(in_socket, in_param){
 	switch(in_param["input"]){
 		case "Characters":
-			return await character.find({"account": in_param["Username"]}).exec()	
+			return await character.find({"account": in_param["username"]}).exec()	
 			.then(async (found_characters) => {
 				sendPacket(in_socket, "Character list", found_characters);
 				//await dataController.sendListData(getSocket, 1, found_characters, "characterList", "Load characters", "Load all Characters", "All characters complete");	
@@ -99,25 +117,49 @@ async function processDatabase(in_socket, in_param){
 
 async function processPreload(in_socket, in_param){
 	newParam = {};
-	area.findOne({"areaName": in_param["entity"] + "_farm", "worldObj.worldName": in_param["worldName"]})
-	.then(async (getFarm) => {
-		if (getFarm == null){
-			console.log("Farm generated");
-			world.findOne({"worldName": in_param["worldName"]}).exec()
-			.then(async (get_world) =>{
-				return await instantiator.generatePlayerFarm(in_socket, get_world, in_param["entity"]);
+	switch(in_param["input"])
+	{
+		case "Generate farm":
+			area.findOne({"areaName": in_param["entity"] + "_farm", "worldObj.worldName": in_param["worldName"]})
+			.then(async (getFarm) => {
+				if (getFarm == null){
+					console.log("Farm generated");
+					world.findOne({"worldName": in_param["worldName"]}).exec()
+					.then(async (get_world) =>{
+						return await instantiator.generatePlayerFarm(in_socket, get_world, in_param["entity"]);
+					})
+				}
 			})
-		}
-	})
-	.then(async () =>{
-		sendPacket(in_socket, "Acknowledge", "Farm generated");
-	})
+			.then(async () =>{
+				newParam["action"] = "Farm generated";
+				sendPacket(in_socket, "Acknowledge", newParam);
+			})
+			break;		
+		case "Preload Area":
+			// console.log(in_param);
+			param = in_param["data"];
+			// console.log(param);
+			return await area.findOne({"areaName": param["areaName"]}).exec()
+			.then(async (getArea) => {
+				// console.log(getArea);
+				let newParam = {};
+				newParam["length"] = getArea['length'];
+				newParam["width"] = getArea['width'];
+				newParam["height"] = getArea["height"];
+				newParam["areaName"] = getArea["areaName"];
+				newParam["Action"] = "Preload grid";
+				sendPacket(in_socket, "Acknowledge", newParam);
+//				getSocket.emit("Area", JSON.stringify(newParam).replace(/"/g, "`"));
+			})
+			break;
+	}
 }
 
 async function processPlayer(in_socket, in_param){
+    let param = JSON.parse(in_param["data"]);
 	switch(in_param["input"]){				
 		case "Items":
-			return await itemExistance.find({"binder.entityName": in_param["entity"]}).select('-binder').exec()	
+			return await itemExistance.find({"binder.entityName": param["entity"]}).select('-binder').exec()	
 			.then(async (found_items) => {
 				sendPacket(in_socket, "Item list", found_items);
 			})	
@@ -172,18 +214,78 @@ async function processLoad(in_socket, in_param)
 	}
 }
 
-async function processAction(in_broadcast_socket, in_param)
+async function processAction(in_broadcast_socket, in_socket, in_param)
 {
+	let newParam = {};
+    let param = JSON.parse(in_param["data"]);
 	switch(in_param["input"])
 	{
 		case "New day":
 			return serverController.newDay(in_broadcast_socket, in_param["worldName"]);
 		case "refill water":
 			return areaItem.findByIdAndUpdate(in_param["item"]["_id"], {"itemObj": in_param["item"]["itemObj"], "position": in_param["item"]["position"], "rotation": in_param["item"]["rotation"]}).exec();
+		case "Pick vegetation":
+			return await areaPlant.findOne({"index.areaObj.areaName": param["areaName"], "index.areaObj.worldObj.worldName": in_param["worldName"], "index.x": param["index"]["x"], "index.y": param["index"]["y"], "index.z": param["index"]["z"]}).exec()
+			.then(async (get_areaPlant) => {
+				return await new Promise(async (resolve, reject) => {						
+					newParam["action"] = "Action event";
+					if (get_areaPlant["deathDayPassed"] >= get_areaPlant["deathDayRequired"])
+					{
+						newParam["message"] = "Removing " + get_areaPlant["plantName"];
+					} else {
+						if (get_areaPlant["dayPassed"] >= get_areaPlant["dayRequired"]){
+							newParam["message"] = "Harvesting " + get_areaPlant["plantName"];
+						}
+					}
+					await resolve("Done");
+				})
+
+			})
+			.then(async () =>{
+				sendPacket(in_socket, "Acknowledge", newParam);
+//				await getSocket.emit("Action Index", JSON.stringify(new_param).replace(/"/g, "`"));
+			})
+
+			break;
+		case "Trade":
+			return trade(in_socket, in_param);
+			break;
+		case "Teleport":
+			return await area.findOne({"areaName": param["areaName"]}).exec()
+			.then(async (getArea) => {
+				if (getArea != null) {				
+					if (param["x"] > 0 && param["x"] < getArea['length'] &&
+						param["y"] > 0 && param["y"] < getArea['width'] && 
+						param["z"] >= 0 && param["z"] < getArea['height'])
+					{
+						sendPacket(in_socket, "Area", getArea);
+					} else {
+						newParam["message"] = "Teleportation spot out of area field.";
+						newParam["action"] = "Error";
+						sendPacket(in_socket, "Acknowledge", newParam);
+					}
+				} else {
+						newParam["message"] = "Area does not exist.";
+						newParam["action"] = "Error";
+						sendPacket(in_socket, "Acknowledge", newParam);					
+				}
+			})
+			break;	
 	}
 }
 
 async function processItem(in_socket, in_param)
+{
+	let param = JSON.parse(in_param["data"]);
+	// console.log(param);
+	switch(in_param["input"])
+	{
+		case "Save":		
+ 			itemExistance.findByIdAndUpdate(param["_id"], {"itemObj": param["ItemObj"]}).exec();
+ 			break;
+	}
+}
+async function processPlayerItem(in_socket, in_param)
 {
 	switch(in_param["input"])
 	{
@@ -221,4 +323,224 @@ async function processItem(in_socket, in_param)
 			instantiator.npc_getItem(getSocket, in_param["EntityName"], in_param["Item"], in_param["Quantity"], param)
 			break;
 	}
+}
+
+async function processArea(in_socket, in_param)
+{
+
+}
+async function processStorage(in_socket, in_param)
+{
+	switch(in_param["input"])
+	{
+		case "Access":
+		    let param = JSON.parse(in_param["data"]);
+			return await itemExistance.find({"storageObj._id": mongoose.Types.ObjectId(param["storageID"])}).exec()
+			.then(async (getStorage) => {
+				sendPacket(in_socket, "Storage", getStorage);
+//				await dataController.sendListData(in_socket, 2, getStorage, "storageList", "Load storage access", "Load all storage item", "All world loaded complete");	
+			})
+		break;
+	}
+}
+
+async function trade(in_socket, in_param)
+{
+	let param = JSON.parse(in_param["data"]);
+	// console.log(param);
+			let get_trade;
+			switch(param["fromType"]){
+				case "Storage":
+					get_trade = itemExistance.findOne({"_id": mongoose.Types.ObjectId(param["item"]), "storageObj._id": mongoose.Types.ObjectId(param["fromName"])})
+					break;
+				case "Entity":
+					get_trade = itemExistance.findOne({"_id": mongoose.Types.ObjectId(param["item"]), "binder.entityName": param["fromName"]})
+					break;
+				case "NPC":
+					get_trade = itemExistance.findOne({"_id": mongoose.Types.ObjectId(param["item"]), "binder._id": mongoose.Types.ObjectId(param["fromName"])})
+					break;
+			}
+			let to_entity;
+			switch(param["toType"]){
+				case "Storage":
+					to_entity = areaItem.findOne({"_id": mongoose.Types.ObjectId(param["toName"])});
+					break;
+				case "Entity":
+					to_entity = character.findOne({"entityName": param["toName"]});
+					break;
+				case "NPC":
+					to_entity = entityExistance.findOne({"entityObj._id": mongoose.Types.ObjectId(param["toName"])});
+					break;
+			}
+
+			Promise.all([get_trade, to_entity])
+			.then(async (res) =>{			
+				switch(param["toType"]){
+					case "Storage":
+						res.push(await itemExistance.findOne({"itemObj.itemName": res[0]["itemObj"]["itemName"], "storageObj._id": mongoose.Types.ObjectId(param["toName"])}).exec());
+						break;
+					case "Entity":
+					case "NPC":
+						res.push(await itemExistance.findOne({"itemObj.itemName": res[0]["itemObj"]["itemName"], "binder.entityName": param["toName"]}).exec());
+						break;
+				}
+				return res;
+			})
+			.then(async (res) => {
+				res[0]["itemObj"]["quantity"] -= parseInt(param["quantity"]);
+				if (res[2] != null){
+					res[2]["itemObj"]["quantity"] += parseInt(param["quantity"]);
+					await res[2].save();
+				} else {
+					await res.pop();
+					let temp_item = await new item(res[0].itemObj);
+					temp_item.quantity = param["quantity"];
+					switch(param["toType"]){
+						case "Storage":
+						res.push(await new itemExistance({"itemObj": temp_item, "storageObj": res[1]["itemObj"]}).save());
+						break;
+						case "Entity":
+							res.push(await new itemExistance({"itemObj": temp_item, "binder": res[1]}).save());
+							break;
+						case "NPC":
+							res.push(await new itemExistance({"itemObj": temp_item, "binder": res[1]["entityObj"]}).save());
+							break;
+					}
+				}
+				if (res[0]["itemObj"]["quantity"] <= 0){
+					res[0].remove();
+				} else {
+					res[0].save();
+				}
+				return res;
+			})
+			.then(async (res) => {
+				// console.log(res[2]);
+				// console.log(res[0]);
+				// sendPacket(in_socket, "Item", res[2]);
+				// sendPacket(in_socket, "Item", res[0]);
+				// await getSocket.emit("Transfer Item", JSON.stringify(res[2]).replace(/"/g, "`"));
+				// await getSocket.emit("Transfer Item", JSON.stringify(res[0]).replace(/"/g, "`"));				
+			})
+}
+
+async function processWorld(in_broadcast_socket, in_socket, in_param)
+{
+    let param = JSON.parse(in_param["data"]);
+	switch(in_param["input"])
+	{
+		case "New world":
+			await new world(param).save()
+			.then(async (new_world) => {
+				return await instantiator.newWorld(in_socket, new_world);
+			})
+			.then(async (save_world) => {
+				return await world.find({}).exec()
+			})
+			.then(async (getWorlds) => {
+				serverController.init();
+				sendPacket(in_socket, "World list", getWorlds);
+//						await dataController.sendListData(getSocket, 10, getWorlds, "worldList", "Load worlds", "Load all World", "All world loaded complete");	
+			})				
+			break;
+		case "Save":
+			serverController.worlds.map(it_world => {
+				if (it_world["worldName"] === param["worldName"]){
+					it_world["time"] = param["time"];
+					var index = serverController.worlds.indexOf(it_world);
+					  if (index > -1) {
+						    serverController.worlds.splice(index, 1);
+					  }
+					serverController.worlds.push(it_world);
+					sendPacket(in_broadcast_socket, "World", param);
+//						socket.emit("Load world", JSON.stringify(in_data).replace(/"/g, "`"));
+				}
+			});
+			break;
+	}
+
+}
+
+async function processIndex(in_broadcast_socket, in_socket, in_param)
+{
+    let param = JSON.parse(in_param["data"]);
+	switch(in_param["input"])
+	{
+		case "Plow":
+			areaIndex.findOneAndUpdate({"areaObj.areaName": param["areaObj"]["areaName"], "areaObj.worldObj.worldName": in_param["worldName"], "x": param["x"], "y": param["y"], "z": param["z"]}, {"objectName": param["objectName"], "destructable": param["destructable"], "pickable": param["pickable"], "state": param["state"]}, {upsert:true}).exec()
+			sendPacket(in_broadcast_socket, "Index", param);
+//			in_broadcast_socket.emit("Area Update", JSON.stringify(param).replace(/"/g, "`"));
+		break;
+		case "Plant":
+			let seed = param["state"].replace("Plant ", "");
+			let foundIndex = areaIndex.findOne({"areaObj.areaName": param["areaObj"]["areaName"], "areaObj.worldObj.worldName": in_param["worldName"], "x": param["x"], "y": param["y"], "z": param["z"]});
+			let foundPlant = plantDatabase.findOne({"seedName": seed});
+
+			Promise.all([foundIndex, foundPlant])
+			.then(async (res) => {
+				new areaPlant({"index": res[0], "plantName": res[1]["seedName"], "state": "Growing", "dayPassed": 0, "dayRequired": res[1]["dayRequired"], "deathDayPassed": 0, "deathDayRequired": res[1]["deathDayRequired"], isWatered: false}).save()
+				.then(async (newPlant) => {
+					sendPacket(in_socket, "Area Plant", newPlant);
+					// newParam["index"] = res[0];
+					// newParam["plant"] = newPlant;
+					// getSocket.emit("Load Plant", JSON.stringify(newParam).replace(/"/g, "`"));
+				})
+			})
+			break;
+		case "Harvest":
+			await areaIndex.deleteOne({"areaObj.areaName": param["areaObj"]["areaName"], "areaObj.worldObj.worldName": in_param["worldName"], "x": param["x"], "y": param["y"], "z": param["z"]}).exec()
+			.then(async () => {
+				return await areaPlant.deleteOne({"index.areaObj.areaName": param["areaObj"]["areaName"], "index.areaObj.worldObj.worldName": in_param["worldName"], "index.x": param["x"], "index.y": param["y"], "index.z": param["z"]}).exec();
+			})
+			newParam["x"] = param["x"];
+			newParam["y"] = param["y"];
+			newParam["z"] = param["z"];
+			newParam["state"] = "Clear";					
+			in_broadcast_socket.emit("Area Update", JSON.stringify(newParam).replace(/"/g, "`"));	
+			break;				
+		case "Water":
+		areaPlant.findOneAndUpdate({"index.areaObj.areaName": param["areaObj"]["areaName"], "index.areaObj.worldObj.worldName": in_param["worldName"], "index.x": param["x"], "index.y": param["y"], "index.z": param["z"]}, {"isWatered": true}, {upsert:true, new:true}).exec()
+		.then(async (getPlant) => {
+			sendPacket(in_socket, "Area Plant", getPlant);
+			// newParam["index"] = getPlant["index"];
+			// newParam["plant"] = getPlant;
+			// getSocket.emit("Load Plant", JSON.stringify(newParam).replace(/"/g, "`"));
+		})
+		break;
+	}
+}
+
+async function processEntity(in_socket, in_param)
+{
+	let param = JSON.parse(in_param["data"]);
+	switch(in_param["input"])
+	{
+		case "Player":
+			let currentRoom = Object.keys(in_socket.rooms).filter(function(item) {
+			    return item !== in_socket.id;
+			});
+
+			if (currentRoom != param["areaName"]){
+				currentRoom.forEach(async (room) => {
+					in_socket.leave(room);
+				});
+				in_socket.join(param["areaName"]);
+
+			}
+
+
+			character.findOne({"entityName": param["entityName"]}).exec()
+			.then(async (foundEntity) => {
+				foundEntity["position"] = param["position"];
+				foundEntity["rotation"] = param["rotation"];
+				foundEntity["areaName"] = param["areaName"];
+				foundEntity["stamina"] = param["stamina"];
+				foundEntity["maxStamina"] = param["maxStamina"];
+				foundEntity["state"] = param["state"];
+				foundEntity["holding"] = param["holding"];
+				foundEntity["backpack"] = param["backpack"];
+				foundEntity.save();
+			})
+			break;
+	}	
 }

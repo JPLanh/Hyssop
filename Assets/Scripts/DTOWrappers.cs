@@ -92,6 +92,7 @@ public class AreaItemDTO
 [Serializable]
 public class EntityExistanceDTO
 {
+    public string _id;
     public EntityDTO entityObj;
     public AreaDTO areaObj;
 }

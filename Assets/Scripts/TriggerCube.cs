@@ -13,7 +13,7 @@ public class TriggerCube : MonoBehaviour, IActions, IPickable
         throw new System.NotImplementedException();
     }
 
-    public void modifyAction(AreaIndex in_grid, mainMenuListener in_mainMenu)
+    public void modifyAction(AreaIndex in_grid, PlayerMenu in_mainMenu)
     {
         in_mainMenu.modifyAction();
         in_mainMenu.selectedGridIndex = in_grid;

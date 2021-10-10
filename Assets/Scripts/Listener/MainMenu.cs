@@ -172,9 +172,9 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
             //        new_world.noon = CustomUtilities.vector3Rounder(new Vector3(90f, 0f, 0f));
             new_world.dayBeginHour = 8;
             new_world.dayEndHour = 18;
-            new_world.Action = "New World";
 
-            Network.doSave<World>("World", new_world);
+            Network.sendPacket(doCommands.world, "New world", new_world);
+            //Network.doSave<World>("World", new_world);
         }
     }
 
@@ -747,8 +747,8 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
 
         if (Network.serverAcknowledge.Count > 0)
         {
-            string getAction = Network.serverAcknowledge.Dequeue();
-            switch (getAction)
+            Dictionary<string, string> getAction = Network.serverAcknowledge.Dequeue();
+            switch (getAction["action"])
             {
                 case "Welcome":
 

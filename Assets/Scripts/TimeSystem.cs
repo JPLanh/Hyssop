@@ -64,14 +64,14 @@ public class TimeSystem : MonoBehaviour
     public void setDayEnd()
     {
         currentWorld.time = ((float)((currentWorld.dayEndHour) * 60) / 1440);
-        currentWorld.Action = "Save World";
-        Network.doSave<World>("World", currentWorld);
+        Network.sendPacket<WorldDTO>(doCommands.world, "Save", currentWorld.getDTO());
+//        Network.doSave<World>("World", currentWorld);
     }
     public void setDayBegin()
     {
         currentWorld.time = ((float)((currentWorld.dayBeginHour) * 60) / 1440);
-        currentWorld.Action = "Save World";
-        Network.doSave<World>("World", currentWorld);
+        Network.sendPacket<WorldDTO>(doCommands.world, "Save", currentWorld.getDTO());
+        //        Network.doSave<World>("World", currentWorld);
     }
     void timerTick()
     {
@@ -119,7 +119,6 @@ public class TimeSystem : MonoBehaviour
                 }
                 dayEndEvent();
                 currentWorld.isDayEnd = true;
-                //            DataCache.saveNPC();
             }
 
             if (currentWorld.time >= 1.0f)
@@ -151,14 +150,6 @@ public class TimeSystem : MonoBehaviour
             {
                 getListener.dayBeginAction();
             }
-            //if (DataCache.inPlayAreaItem.TryGetValue("Central Hub", out List<Item> out_area))
-            //{
-            //    List<Item> out_item = out_area.FindAll(x => x.itemName.Equals("Wooden Door"));
-            //    foreach (Item out_door in out_item)
-            //    {
-            //        out_door.state = "Open";
-            //    }
-            //}
         }
     }
 
@@ -170,16 +161,11 @@ public class TimeSystem : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        //float addition = currentWorld.timeRate * Time.deltaTime;
-        //if (!currentWorld.timeStopped) currentWorld.time += addition;
-        //print(currentWorld.time);
         if (!string.IsNullOrEmpty(currentWorld.worldName))
         {
             endOfDay();
             beginOfDay();
         }
-
-        //        timeText.text = (minute / 60).ToString("D2") + " : " + (minute % 60).ToString("D2");
 
         sun.transform.eulerAngles = (currentWorld.time - .25f) * noon * 4.0f;
         sun.intensity = sunIntensity.Evaluate(currentWorld.time);

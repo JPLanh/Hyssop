@@ -1,18 +1,12 @@
 using UnityEngine;
 using UnityEngine.UI;
-
-/**
- * 
- * Use rotation instead of eurlerPosition to rotate once the entity has been instantiated because rotation override eulerposition
- * 
- */
+using System.Collections.Generic;
 
 public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
 {
     public CanvasHelper canvas;
     public Entity playerEntity;
-    //    private string state;
-    public mainMenuListener mainMenu;
+    public PlayerMenu mainMenu;
     public Transform itemDrag;
     public GridSystem currentGrid;
     public Animator entityAnimation;
@@ -32,23 +26,15 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
     [SerializeField]
     private Transform userHead;
 
-    //public int stamina;
-    //public int maxStamina;
     private float recoveryTimer;
     public playerView playerVision;
-    //public string playerState;
     public CharacterController characterController;
     public avatarProperties current_avatar;
 
     [Header("Equipments")]
     public Text holdingText;
-    //public backpack currentBackpack;
-    //public Inventory currentToolbar;
-    //public Inventory playerInventory;
-    //public Inventory creatorInventory;
-    //public Item holding;
 
-    private Vector3 teleportPosition;
+    private Vector3 teleportPosition = Vector3.zero;
     private bool canRotate;
     private bool canMove;
     public bool isPaused;
@@ -61,42 +47,6 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
 
     private float rotateAmount = 2.5f;
 
-    //private void offlineLoad()
-    //{
-
-    //    if (playerEntity != null)
-    //    {
-    //    }
-    //    else
-    //    {
-
-    //        playerEntity.entityName = "Testing";
-    //        playerEntity.backpack.size = 8;
-    //        playerEntity.backpack.createItem(name, "Basic Shovel", 1);
-    //        playerEntity.backpack.createItem(name, "Basic Axe", 1);
-    //        playerEntity.backpack.createItem(name, "Basic Pickaxe", 1);
-    //        playerEntity.backpack.createItem(name, "Small Watering Can", 1);
-    //        playerEntity.backpack.createItem(name, "Strawberry seed", 10);
-    //        playerEntity.backpack.createItem(name, "Silver", 100);
-
-    //        //if (!currentGrid.loadArea())
-    //        //{
-    //        //    currentGrid.generateFarm(25, 45, 10, name + "_farm");
-    //        //}
-    //        transform.localPosition = new Vector3(19f, 0f, 8f);
-    //        playerEntity.stamina = 100;
-    //        playerEntity.maxStamina = 100;
-    //        holdingText.text = "Nothing";
-
-    //        save();
-    //        newMessage("Jimmy", "Hi ho there! Welcome to the alpha version of this game, Move with WASD, and control your camera with the mouse (FPS logic much?). Anyways, M button will bring up your inventory and ESC will bring up setting menu. IT's not fully implemented but that's where you can go into the builder mode to build up your place.. it's clunky but i will finish it later. Lets go outside and proceed with the game.");
-    //    }
-    //}
-
-    //void onlineLoad()
-    //{
-    //}
-    // Start is called before the first frame update
     void Start()
     {
         characterController.enabled = false;
@@ -145,7 +95,7 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
         {
             save();
             currentGrid.saveArea(Network.isConnected ? "Online" : "Offline");
-            DataCache.saveAreaItems(currentGrid.areaName);
+            DataCache.saveAreaItems(currentGrid.area.areaName);
         }
     }
 
@@ -157,7 +107,7 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
         characterController.enabled = true;
         transform.rotation = in_entity.rotation;
         playerEntity = in_entity;
-        currentGrid.areaName = in_entity.areaName;
+        currentGrid.area.areaName = in_entity.areaName;
 
 
         current_avatar = new avatarProperties(in_entity.currentAnimal);
@@ -171,7 +121,6 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
         current_avatar.currentAvatar.transform.SetParent(transform);
         current_avatar.currentAvatar.transform.localPosition = new Vector3(-0f, -0f, -0f);
         current_avatar.currentAvatar.transform.localRotation = Quaternion.Euler(0f, -90f, 0f);
-        //        current_avatar.currentAvatar.transform.localScale = new Vector3(.85f, .85f, .85f);
         if (current_avatar.currentAvatar.TryGetComponent<AvatarEntity>(out AvatarEntity out_avatarEntity))
         {
             current_avatar.current_avatarEntity = out_avatarEntity;
@@ -192,14 +141,13 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
             playerEntity.backpack.createItem(name, "Coffee bean", 10);
             playerEntity.backpack.createItem(name, "Silver", 100);
             playerEntity.state = "Player";
-            //            playerEntity.areaName = playerEntity.entityName + " _farm";
             holdingText.text = "Nothing";
             newMessage("Jimmy", "Hi ho there! Welcome to the alpha version of this game, Move with WASD, and control your camera with the mouse (FPS logic much?). Anyways, M button will bring up your inventory and ESC will bring up setting menu. IT's not fully implemented but that's where you can go into the builder mode to build up your place.. it's clunky but i will finish it later. Lets go outside and proceed with the game.");
             save();
         }
         else
         {
-            currentGrid.areaName = in_entity.areaName;
+            currentGrid.area.areaName = in_entity.areaName;
             if (playerEntity.holding == null || holding.itemName == null)
             {
                 holdingText.text = "Nothing";
@@ -243,7 +191,7 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
         playerEntity.position = CustomUtilities.vector3Rounder(transform.position);
         playerEntity.rotation = CustomUtilities.vector3Rounder(transform.rotation);
         //            playerEntity.rotation = Quaternion.identity;
-        playerEntity.areaName = currentGrid.areaName;
+        playerEntity.areaName = currentGrid.area.areaName;
         if (!Network.isConnected)
         {
             DataUtility.saveEntityPlayer(playerEntity);
@@ -263,7 +211,7 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
                 GUI.Label(new Rect(10, 100, 300, 20), "Currently At: " + currentGrid.getIndex(transform.position));
                 if (playerVision.focusPoint != Vector3.zero) GUI.Label(new Rect(10, 120, 300, 20), "Looking At: " + playerVision.focusPoint.x + " , " + playerVision.focusPoint.z + " , " + playerVision.focusPoint.y);
                 if (playerVision.focusPoint != Vector3.zero && playerVision.getGridIndex() != null) GUI.Label(new Rect(10, 140, 300, 20), "Index Select: " + playerVision.getGridIndex().x + " , " + playerVision.getGridIndex().y + " , " + playerVision.getGridIndex().z);
-                GUI.Label(new Rect(10, 160, 300, 20), currentGrid.areaName + " _ Time: " + ts.currentWorld.time);
+                GUI.Label(new Rect(10, 160, 300, 20), currentGrid.area.areaName + " _ Time: " + ts.currentWorld.time);
                 if (playerEntity.holding != null)
                 {
                     if (playerEntity.getHolding().ItemObj.itemName != null)
@@ -314,13 +262,7 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
                 playerEntity.position = transform.position;
                 playerEntity.rotation = transform.rotation;
                 updateBroadcastTimer = updateBroadcastInterval;
-                EntityUpdateWrapper newWrapper = new EntityUpdateWrapper();
-                newWrapper.areaName = currentGrid.areaName;
-                newWrapper.position = CustomUtilities.vector3Rounder(transform.position);
-                newWrapper.rotation = CustomUtilities.vector3Rounder(transform.rotation);
-                newWrapper.entityName = name;
-                newWrapper.worldName = Network.loadedWorld.worldName;
-                Network.doSaveImmediate<EntityUpdateWrapper>("Entity", newWrapper);
+                Network.doSaveImmediate<Entity>("Entity", playerEntity);
 
             }
         }
@@ -331,8 +273,9 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
 
             canvas.hub.staminaGauge.updateGauge(((float)(playerEntity.maxStamina - playerEntity.stamina) / playerEntity.maxStamina));
             if (!string.IsNullOrEmpty(playerEntity.holding) && playerEntity.getHolding().ItemObj.itemName != null && !playerEntity.getHolding().ItemObj.itemName.Equals(""))
-            {
-                if (playerEntity.getHolding().ItemObj.maxDurability > 0)
+        {
+            holdingText.text = playerEntity.getHolding().ItemObj.itemName.Equals("") ? "Nothing" : playerEntity.getHolding().ItemObj.itemName;
+            if (playerEntity.getHolding().ItemObj.maxDurability > 0)
                 {
                     if (!canvas.hub.durabilityGameObject.activeInHierarchy) canvas.hub.durabilityGameObject.SetActive(true);
                     canvas.hub.durabilityGauges.updateGauge(((float)(playerEntity.getHolding().ItemObj.maxDurability - playerEntity.getHolding().ItemObj.durability) / playerEntity.getHolding().ItemObj.maxDurability));
@@ -708,10 +651,10 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
                             if (Network.isConnected)
                             {
                                 ActionWrapper new_action = new ActionWrapper();
-                                new_action.areaName = currentGrid.areaName;
-                                new_action.action = "Pick vegetation";
+                                new_action.areaName = currentGrid.area.areaName;
                                 new_action.index = playerVision.getGridIndex();
-                                Network.doAction<ActionWrapper>("Index", new_action);
+                                Network.sendPacket(doCommands.action, "Pick vegetation", new_action);
+//                                Network.doAction<ActionWrapper>("Index", new_action);
                             }
                             else
                             {
@@ -833,7 +776,6 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
                             else if (playerVision.getGridIndex().index.TryGetComponent<Well>(out Well out_well))
                             {
                                 actionProgression("Refilling", (int)(playerEntity.getHolding().ItemObj.maxCapacity / 10));
-                                //                                holdingout_well.refilAmount(holding.capacity)
                             }
                         }
 
@@ -845,7 +787,7 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
 
     public void actionProgression(string in_action, int in_seconds)
     {
-        if (currentGrid.buildable)
+        if (currentGrid.area.buildable)
         {
             if (playerEntity.stamina < 5)
             {
@@ -881,21 +823,21 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
     public void doAction(string in_action)
     {
         string[] parser = in_action.Split(' ');
+
+        AreaIndexDTO newWrapper = null;
         if (parser[0].Equals("Planting"))
         {
             if (playerVision.getGridIndex().index.TryGetComponent<Soil>(out Soil getSoil))
             {
                 if (Network.isConnected)
                 {
-                    gridIndexWrapper newWrapper = new gridIndexWrapper();
-                    newWrapper.areaName = currentGrid.areaName;
-                    newWrapper.Data = playerVision.getGridIndex();
-                    playerVision.getGridIndex().state = "";
+                    newWrapper = playerVision.getGridIndex().toDTO();
+                    newWrapper.areaObj = currentGrid.area.toDTO();
                     newWrapper.state = "Plant " + playerEntity.getHolding().ItemObj.itemName;
                     playerEntity.stamina -= 5;
                     current_avatar.current_avatarEntity.animator.SetBool("isPlanting", false);
                     playerEntity.backpack.modifyItem(playerEntity.getHolding(), 1);
-                    Network.doSave("Index", newWrapper);
+                    Network.sendPacket<AreaIndexDTO>(doCommands.index, "Plant", newWrapper);
                 }
                 else
                 {
@@ -918,19 +860,14 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
                 if (playerVision.getGridIndex().index.TryGetComponent<Soil>(out Soil out_soil))
                 {
                     PlantFactory.removeCrop(out_soil.plant);
-                    //Destroy(playerVision.getGridIndex().index);
-                    //playerVision.getGridIndex().index = null;
-                    //playerVision.getGridIndex().objectName = null;
-                    //current_avatar.current_avatarEntity.animator.SetBool("isPlanting", false);
-                    //currentGrid.saveArea(Network.isConnected ? "Online" : "Offline");
+
 
                     currentGrid.removeObjectAtIndex(playerVision.getGridIndex());
-                    gridIndexWrapper newgridWrapper = new gridIndexWrapper();
-                    newgridWrapper.areaName = currentGrid.areaName;
-                    newgridWrapper.Data = playerVision.getGridIndex();
-                    newgridWrapper.state = "Harvest";
+                    newWrapper = playerVision.getGridIndex().toDTO();
+                    newWrapper.areaObj = currentGrid.area.toDTO();
+                    newWrapper.state = "Harvest";
                     current_avatar.current_avatarEntity.animator.SetBool("isPlanting", false);
-                    Network.doSave("Index", newgridWrapper);
+                    Network.sendPacket<AreaIndexDTO>(doCommands.index, "Harvest", newWrapper);
                 }
             }
         }
@@ -947,12 +884,11 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
 
                         playerEntity.backpack.createItem(name, out_plant.plantName, Random.Range(2, 4));
                         currentGrid.removeObjectAtIndex(playerVision.getGridIndex());
-                        gridIndexWrapper newgridWrapper = new gridIndexWrapper();
-                        newgridWrapper.areaName = currentGrid.areaName;
-                        newgridWrapper.Data = playerVision.getGridIndex();
-                        newgridWrapper.state = "Harvest";
+                        newWrapper = playerVision.getGridIndex().toDTO();
+                        newWrapper.areaObj = currentGrid.area.toDTO();
+                        newWrapper.state = "Harvest";
                         current_avatar.current_avatarEntity.animator.SetBool("isPlanting", false);
-                        Network.doSave("Index", newgridWrapper);
+                        Network.sendPacket<AreaIndexDTO>(doCommands.index, "Harvest", newWrapper);
                     }
                     else
                     {
@@ -979,14 +915,11 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
             {
                 case "Plowing Land":
                     currentGrid.generateObject(playerVision.getGridIndex(), "Soil", true, true);
-
-                    gridIndexWrapper newWrapper = new gridIndexWrapper();
-                    newWrapper.areaName = currentGrid.areaName;
-                    newWrapper.Data = playerVision.getGridIndex();
-                    playerVision.getGridIndex().state = "";
+                    newWrapper = playerVision.getGridIndex().toDTO();
+                    newWrapper.areaObj = currentGrid.area.toDTO();
                     newWrapper.state = "Plow";
                     current_avatar.current_avatarEntity.animator.SetBool("isPlowing", false);
-                    Network.doSave("Index", newWrapper);
+                    Network.sendPacket<AreaIndexDTO>(doCommands.index, "Plow", newWrapper);
                     useHolding(2, 5);
 
                     break;
@@ -994,13 +927,11 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
                     if (playerVision.getGridIndex().index.TryGetComponent<Soil>(out Soil getSoil))
                     {
                         playerEntity.getHolding().ItemObj.capacity -= 1;
-
-                        gridIndexWrapper newgridWrapper = new gridIndexWrapper();
-                        newgridWrapper.areaName = currentGrid.areaName;
-                        newgridWrapper.Data = playerVision.getGridIndex();
+                        newWrapper = playerVision.getGridIndex().toDTO();
+                        newWrapper.areaObj = currentGrid.area.toDTO();
+                        newWrapper.state = "Water";
                         current_avatar.current_avatarEntity.animator.SetBool("isWatering", false);
-                        newgridWrapper.state = "Water";
-                        Network.doSave("Index", newgridWrapper);
+                        Network.sendPacket<AreaIndexDTO>(doCommands.index, "Water", newWrapper);
                         useHolding(2, 5);
                     }
                     break;
@@ -1015,25 +946,23 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
 
     private void useHolding(int in_durability, int in_stamina)
     {
-        ItemWrapper toUpdate = new ItemWrapper();
         playerEntity.stamina -= in_stamina;
         playerEntity.getHolding().ItemObj.durability -= in_durability;
-        toUpdate.Item = playerEntity.getHolding().ItemObj;
-        Network.doSave("Item", toUpdate);
+        ItemExistanceDTOWrapper toUpdate = playerEntity.getHolding();
+        Network.sendPacket<ItemExistanceDTOWrapper>(doCommands.item, "Save", toUpdate);
+//        Network.doSave("Item", toUpdate);
     }
 
     public void deselectHotbar()
     {
-        //        playerVision.groundSelectable = false;
         holdingText.text = null;
         playerVision.disableSelection();
-        //currentToolbar.currentIndex = -999;
         playerEntity.holding = null;
     }
 
     public void OnTriggerEnter(Collider other)
     {
-        if (other.gameObject.layer == 10)// && !currentGrid.areaName.Equals("Another_farm"))
+        if (other.gameObject.layer == 10)
         {
             string getState = currentGrid.getIndex(transform.position).state;
             string[] parser = getState.Split(' ');
@@ -1097,12 +1026,14 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
         print(in_area + " , " + in_x + " , " + in_y);
         if (Network.isConnected)
         {
-            gridIndexWrapper newWrapper = new gridIndexWrapper();
-            newWrapper.areaName = tempArea;
             teleportPosition = currentGrid.getGridAtLocation(in_x, in_y, in_z);
-            currentGrid.areaName = tempArea;
-            Network.sendPacket<gridIndexWrapper>(doCommands.area, "Load", newWrapper);
-            Network.state = "Load Area";
+            currentGrid.area.areaName = tempArea;
+            Dictionary<string, string> payload = new Dictionary<string, string>();
+            payload["areaName"] = tempArea;
+            payload["x"] = in_x.ToString();
+            payload["y"] = in_y.ToString();
+            payload["z"] = in_z.ToString();
+            Network.sendPacket(doCommands.action, "Teleport", payload);
 //            Network.doLoad<gridIndexWrapper>("Area", newWrapper);
             return false;
         }
@@ -1114,7 +1045,7 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
                 toastNotifications.newNotification(tempArea + " does not exists");
                 return false;
             }
-            if ((in_x > 0 && in_x < tempGrid.length) && (in_y > 0 && in_y < tempGrid.width && (in_z >= 0 && in_z < tempGrid.height)))
+            if ((in_x > 0 && in_x < tempGrid.area.length) && (in_y > 0 && in_y < tempGrid.area.width && (in_z >= 0 && in_z < tempGrid.area.height)))
             {
                 currentGrid.loadPreloadGrid();
                 characterController.enabled = false;
@@ -1133,13 +1064,13 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
     public bool teleportHelper(GridSystem in_grid)
     {
         print(teleportPosition);
-        print(in_grid.length + " , " + in_grid.width + " , " + in_grid.height);
+        print(in_grid.area.length + " , " + in_grid.area.width + " , " + in_grid.area.height);
         if (in_grid == null)
         {
-            toastNotifications.newNotification(in_grid.areaName + " does not exists");
+            toastNotifications.newNotification(in_grid.area.areaName + " does not exists");
             return false;
         }
-        if ((teleportPosition.x >= 0 && teleportPosition.x < in_grid.length) && (teleportPosition.y >= 0 && teleportPosition.y < in_grid.height && (teleportPosition.z >= 0 && teleportPosition.z < in_grid.width)))
+        if ((teleportPosition.x >= 0 && teleportPosition.x < in_grid.area.length) && (teleportPosition.y >= 0 && teleportPosition.y < in_grid.area.height && (teleportPosition.z >= 0 && teleportPosition.z < in_grid.area.width)))
         {
             //            currentGrid.loadPreloadGrid();
             //            string temp_area = currentGrid.areaName;
@@ -1243,7 +1174,6 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
             {
                 case "Inventory":
                     playerEntity.holding = playerEntity.backpack.items[int.Parse(parsed[1])]._id;
-                    print(playerEntity.getHolding().ItemObj.itemName + " , " + playerEntity.getHolding().ItemObj.durability);
                     playerEntity.backpack.indexSelected = int.Parse(parsed[1]);
                     mainMenu.init();
                     holdingText.text = playerEntity.getHolding().ItemObj.itemName;
@@ -1256,6 +1186,9 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
                     {
                         toRepair.ItemObj.durability = toRepair.ItemObj.maxDurability;
                         currency.ItemObj.quantity -= repairAmount;
+                        Network.trade("Entity", playerEntity.entityName, "NPC", mainMenu.focusShop.currentNPC._id, currency._id, repairAmount);
+
+                        Network.sendPacket(doCommands.item, "Save", toRepair);
                     }
                     mainMenu.updateMenu();
                     break;
@@ -1365,5 +1298,11 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
         canMove = true;
         canRotate = true;
         Cursor.lockState = CursorLockMode.Locked;
+    }
+
+    public void teleportToDestination()
+    {
+        if (teleportPosition != Vector3.zero)
+        transform.position = teleportPosition;
     }
 }

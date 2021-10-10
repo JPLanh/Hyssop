@@ -118,7 +118,7 @@ public class Soil : MonoBehaviour, IPickable
             in_plant.x = in_grid.x;
             in_plant.y = in_grid.y;
             in_plant.z = in_grid.z;
-            in_plant.areaName = in_area.areaName;
+            in_plant.areaName = in_area.area.areaName;
             in_plant.state = "Growing";
             plant = in_plant;
             PlantFactory.newCrop(in_plant);

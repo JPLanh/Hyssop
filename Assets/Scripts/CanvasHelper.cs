@@ -7,8 +7,8 @@ using UnityEngine.UI;
  */
 public class CanvasHelper : MonoBehaviour
 {
-    public mainMenuListener listener;
-    public tradeMenuListener tradeMenu;
+    public PlayerMenu listener;
+    public TradeMenu tradeMenu;
     public progressBar progressBar;
     public Hub hub;
     public DialogBox dialogBox;

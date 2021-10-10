@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-public class loadingScreen : MonoBehaviour, IServerListener
+public class LoadingScreen : MonoBehaviour, IServerListener
 {
     [SerializeField] Text prompt;
     [SerializeField] private GridSystem gridSystem;
@@ -69,7 +69,7 @@ public class loadingScreen : MonoBehaviour, IServerListener
             //Load online version
             //            areaGenerator.generateCentralHub("Online", gridSystem, 50, 25, 10, "Central Hub");
             //Network.doLoading("Check Farm");
-            Network.sendPacket(doCommands.preload, "Generate");
+            Network.sendPacket(doCommands.preload, "Generate farm");
         }
 
 
@@ -84,6 +84,20 @@ public class loadingScreen : MonoBehaviour, IServerListener
 
     public void serverResponseListener()
     {
+
+        if (Network.serverAcknowledge.Count > 0)
+        {
+            Dictionary<string, string> getResponse = Network.serverAcknowledge.Dequeue();
+            Dictionary<string, string> payload = new Dictionary<string, string>();
+            switch (getResponse["action"])
+            {
+                case "Farm generated":
+                    payload["entity"] = Network.loadedCharacter.entityName;
+                    Network.sendPacket(doCommands.player, "Items", payload);
+                    break;
+            }
+        }
+
         if (Network.listOfItems.Count > 0)
         {
             List<ItemExistanceDTOWrapper> temp_wrapper = Network.listOfItems.Dequeue();
@@ -116,76 +130,66 @@ public class loadingScreen : MonoBehaviour, IServerListener
             SceneManager.LoadScene("MainGame");
         }
 
-        if (Network.listOfCharacersItem.Count > 0)
-        {
-            ItemExistanceWrapper temp_wrapper = Network.listOfCharacersItem.Dequeue();
-            if (temp_wrapper.Action.Equals("Complete")) Network.doLoading("Get item database");
-            else
-            {
-                foreach (ItemExistanceDTOWrapper it_item in temp_wrapper.itemList)
-                {
-                    Network.loadedCharacter.backpack.items.Add(it_item);
-                }
-            }
-        }
+        //if (Network.listOfCharacersItem.Count > 0)
+        //{
+        //    ItemExistanceWrapper temp_wrapper = Network.listOfCharacersItem.Dequeue();
+        //    if (temp_wrapper.Action.Equals("Complete")) Network.doLoading("Get item database");
+        //    else
+        //    {
+        //        foreach (ItemExistanceDTOWrapper it_item in temp_wrapper.itemList)
+        //        {
+        //            Network.loadedCharacter.backpack.items.Add(it_item);
+        //        }
+        //    }
+        //}
 
-        if (Network.listOfItemDatabase.Count > 0)
-        {
-            //            print("list of Item");
-            itemDatabaseWrapper temp_wrapper = Network.listOfItemDatabase.Dequeue();
-            if (temp_wrapper.Action.Equals("Complete")) Network.doLoading("Get plant database");
-            else
-            {
-                foreach (ItemDTO it_item in temp_wrapper.itemList)
-                {
-                    DataCache.itemCache.Add(it_item.itemName, it_item.getActual());
-                }
-            }
-        }
+        //if (Network.listOfItemDatabase.Count > 0)
+        //{
+        //    //            print("list of Item");
+        //    itemDatabaseWrapper temp_wrapper = Network.listOfItemDatabase.Dequeue();
+        //    if (temp_wrapper.Action.Equals("Complete")) Network.doLoading("Get plant database");
+        //    else
+        //    {
+        //        foreach (ItemDTO it_item in temp_wrapper.itemList)
+        //        {
+        //            DataCache.itemCache.Add(it_item.itemName, it_item.getActual());
+        //        }
+        //    }
+        //}
 
-        if (Network.listOfPlantDatabase.Count > 0)
-        {
-            //            print("list of Plant");
-            plantDatabaseWrapper temp_wrapper = Network.listOfPlantDatabase.Dequeue();
-            if (temp_wrapper.Action.Equals("Complete")) SceneManager.LoadScene("MainGame");
-            else
-            {
-                foreach (PlantDTO it_item in temp_wrapper.plantList)
-                {
-                    DataCache.plantCache.Add(it_item.seedName, it_item.getActual());
-                }
-            }
-        }
+        //if (Network.listOfPlantDatabase.Count > 0)
+        //{
+        //    //            print("list of Plant");
+        //    plantDatabaseWrapper temp_wrapper = Network.listOfPlantDatabase.Dequeue();
+        //    if (temp_wrapper.Action.Equals("Complete")) SceneManager.LoadScene("MainGame");
+        //    else
+        //    {
+        //        foreach (PlantDTO it_item in temp_wrapper.plantList)
+        //        {
+        //            DataCache.plantCache.Add(it_item.seedName, it_item.getActual());
+        //        }
+        //    }
+        //}
 
-        if (Network.serverAcknowledge.Count > 0)
-        {
-            string getResponse = Network.serverAcknowledge.Dequeue();
-            switch (getResponse)
-            {
-                case "Farm generated":
-                    Network.sendPacket(doCommands.player, "Items");
-                    break;
-            }
-        }
-        if (Network.serverResponse.Count > 0)
-        {
-            Dictionary<string, string> getResponse = Network.serverResponse.Dequeue();
+        //if (Network.serverResponse.Count > 0)
+        //{
+        //    Dictionary<string, string> getResponse = Network.serverResponse.Dequeue();
 
-            switch (getResponse["Action"])
-            {
-                case "Farm generated":
-                    Network.doLoading("Get Inventory");
-                    break;
-                case "Load items":
-                    Network.doLoading("Get item database");
-                    break;
-                case "Load plants":
-                    Network.doLoading("Get plant database");
-                    break;
-                case "Loaded Successful":
-                    SceneManager.LoadScene("MainGame");
-                    break;
-            }
-        }
+        //    switch (getResponse["Action"])
+        //    {
+        //        case "Farm generated":
+        //            Network.doLoading("Get Inventory");
+        //            break;
+        //        case "Load items":
+        //            Network.doLoading("Get item database");
+        //            break;
+        //        case "Load plants":
+        //            Network.doLoading("Get plant database");
+        //            break;
+        //        case "Loaded Successful":
+        //            SceneManager.LoadScene("MainGame");
+        //            break;
+        //    }
+        //}
     }
 }

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public class mainMenuListener : MonoBehaviour, IActionListener, IServerListener
+public class PlayerMenu : MonoBehaviour, IActionListener, IServerListener
 {
     public GameObject currentMenu;
 
@@ -422,7 +422,10 @@ public class mainMenuListener : MonoBehaviour, IActionListener, IServerListener
         else
         {
             shopList = new List<ItemExistanceDTOWrapper>();
-            Network.doShop(focusShop.currentNPC.entityName, "Get item database");
+            Dictionary<string, string> payload = new Dictionary<string, string>();
+            payload["entity"] = focusShop.currentNPC.entityName;
+            Network.sendPacket(doCommands.player, "Items", payload);
+//            Network.doShop(focusShop.currentNPC.entityName, "Get item database");
         }
     }
 
@@ -485,11 +488,14 @@ public class mainMenuListener : MonoBehaviour, IActionListener, IServerListener
                         {
                             //if (currentPlayer.playerEntity.backpack.createItem(currentPlayer.playerEntity.entityName, tradeItem.ItemObj.itemName, 1))
                             //{
-                            Network.trade("NPC", focusShop.currentNPC.entityName, "Entity", currentPlayer.playerEntity.entityName, tradeItem.ItemObj._id, 1);
-                            tradeItem.ItemObj.quantity -= 1;
-                            currentPlayer.playerEntity.backpack.localCreateItem(currentPlayer.playerEntity.entityName, tradeItem.ItemObj.itemName, 1);
-                            Network.trade("Entity", currentPlayer.playerEntity.entityName, "NPC", focusShop.currentNPC.entityName, currencyTrade.ItemObj._id, tradeItem.itemMarketObj.buyPrice);
-                            currentPlayer.playerEntity.backpack.localModifyItem(currencyTrade, tradeItem.itemMarketObj.buyPrice);
+
+                            Network.trade("NPC", focusShop.currentNPC._id, "Entity", currentPlayer.playerEntity.entityName, tradeItem._id, 1);
+                            currentPlayer.playerEntity.backpack.localCreateItem(tradeItem.ItemObj.itemName, 1);
+//                            tradeItem.ItemObj.quantity -= 1;
+//                            currentPlayer.playerEntity.backpack.localCreateItem(currentPlayer.playerEntity.entityName, tradeItem.ItemObj.itemName, 1);
+                            Network.trade("Entity", currentPlayer.playerEntity.entityName, "NPC", focusShop.currentNPC._id, currencyTrade._id, tradeItem.itemMarketObj.buyPrice);
+                            currentPlayer.playerEntity.backpack.localCreateItem(currencyTrade.ItemObj.itemName, -tradeItem.itemMarketObj.buyPrice);
+                            //                            currentPlayer.playerEntity.backpack.localModifyItem(currencyTrade, tradeItem.itemMarketObj.buyPrice);
                             //                                DataCache.adjustMarketPrice(tradeItem);
                             currentPlayer.mainMenu.updateMenu();
 
@@ -542,7 +548,7 @@ public class mainMenuListener : MonoBehaviour, IActionListener, IServerListener
                         break;
                     case "Save Area":
                         currentPlayer.currentGrid.saveArea("Offline");
-                        currentPlayer.toastNotifications.newNotification(currentPlayer.currentGrid.areaName + " has been saved");
+                        currentPlayer.toastNotifications.newNotification(currentPlayer.currentGrid.area.areaName + " has been saved");
                         break;
                     case "Save Person":
                         currentPlayer.save();
@@ -594,22 +600,17 @@ public class mainMenuListener : MonoBehaviour, IActionListener, IServerListener
 
     public void serverResponseListener()
     {
-        if (Network.listOfCharacersItem.Count > 0)
+        if (Network.listOfItems.Count > 0)
         {
-
-            ItemExistanceWrapper temp_wrapper = Network.listOfCharacersItem.Dequeue();
-            //if (temp_wrapper.Action.Equals("Complete")) Network.doLoading("Get item database");
-            //else
-            //{
-            if (temp_wrapper.itemList != null)
+            List<ItemExistanceDTOWrapper> temp_wrapper = Network.listOfItems.Dequeue();
+            foreach (ItemExistanceDTOWrapper it_itemObj in temp_wrapper)
             {
-                foreach (ItemExistanceDTOWrapper it_itemObj in temp_wrapper.itemList)
+                if (!it_itemObj.ItemObj.itemType.Equals("Money"))
                 {
                     createShopItemBox(it_itemObj.ItemObj, it_itemObj.itemMarketObj.buyPrice.ToString(), shopList.Count);
                     shopList.Add(it_itemObj);
                 }
             }
-            //}
         }
     }
 }

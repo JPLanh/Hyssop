@@ -10,11 +10,13 @@ using UnityEngine;
  */
 public class GridSystem : MonoBehaviour
 {
-    public string areaName;
-    public int width;
-    public int height;
-    public int length;
-    public bool buildable;
+    //public string areaName;
+    //public int width;
+    //public int height;
+    //public int length;
+    //public bool buildable;
+
+    public Area area = new Area();
 
     [Header("Game Object Lists")]
     [SerializeField] private GameObject gameObjectList;
@@ -37,7 +39,6 @@ public class GridSystem : MonoBehaviour
     void Start()
     {
     }
-
     #region init
 
     //Buffer rendering 
@@ -61,8 +62,8 @@ public class GridSystem : MonoBehaviour
         }
         else
         {
-            gridIndexDaoWrapper getAreaIndices = DataUtility.loadArea(areaName);
-            if (loadConfig(areaName, getAreaIndices.length, getAreaIndices.width, getAreaIndices.height, getAreaIndices.buildable))
+            gridIndexDaoWrapper getAreaIndices = DataUtility.loadArea(area.areaName);
+            if (loadConfig(area.areaName, getAreaIndices.length, getAreaIndices.width, getAreaIndices.height, getAreaIndices.buildable))
             {
                 loadAreaHelper(getAreaIndices.listOfgrids);
                 loadLocalPlants();
@@ -78,14 +79,14 @@ public class GridSystem : MonoBehaviour
     //Preload the area without anything else
     public void loadAreaConfig(AreaDTO getAreaIdices)
     {
-        loadConfig(areaName, getAreaIdices.length, getAreaIdices.width, getAreaIdices.height, getAreaIdices.buildable);
+        loadConfig(area.areaName, getAreaIdices.length, getAreaIdices.width, getAreaIdices.height, getAreaIdices.buildable);
         generateIndexes();
     }
 
     public void loadAreaItem(AreaItemDTO it_itemDTO)
     {
             GameObject temp_Obj = Instantiate(Resources.Load<GameObject>(it_itemDTO.itemObj.itemName), it_itemDTO.position, it_itemDTO.rotation);
-            temp_Obj.name = it_itemDTO.itemObj._id;
+            temp_Obj.name = it_itemDTO._id;
             temp_Obj.transform.SetParent(gameObjectList.transform);
             if (temp_Obj.TryGetComponent<ItemEntity>(out ItemEntity out_itemEntity))
             {
@@ -116,6 +117,7 @@ public class GridSystem : MonoBehaviour
             new_npc_properties.currentAvatar.transform.SetParent(new_npc.transform);
             new_npc_properties.currentAvatar.transform.localPosition = new Vector3(0f, 0f, 0f);
             new_npc.transform.SetParent(NPCList);
+            new_npc.name = it_dto._id;
             if (new_npc_properties.currentAvatar.TryGetComponent<AvatarEntity>(out AvatarEntity out_avatarEntity))
             {
                 new_npc_properties.current_avatarEntity = out_avatarEntity;
@@ -141,7 +143,7 @@ public class GridSystem : MonoBehaviour
     //Local preload
     public GridSystem preloadGrid(string in_name)
     {
-        tempGrid.areaName = in_name;
+        tempGrid.area.areaName = in_name;
 
         tempGrid.tempWrapperHolder = DataUtility.loadArea(in_name);
         if (tempGrid.loadConfig(in_name, tempGrid.tempWrapperHolder.length, tempGrid.tempWrapperHolder.width, tempGrid.tempWrapperHolder.height, tempGrid.tempWrapperHolder.buildable))
@@ -158,12 +160,12 @@ public class GridSystem : MonoBehaviour
     public void createNewGrid(int in_length, int in_width, int in_height, string in_name)
     {
         unloadGrid();
-        width = in_width + 2;
-        height = in_height;
-        length = in_length + 2;
-        areaName = in_name;
+        area.width = in_width + 2;
+        area.height = in_height;
+        area.length = in_length + 2;
+        area.areaName = in_name;
 
-        currentGrid = new AreaIndex[length, width, height];
+        currentGrid = new AreaIndex[area.length, area.width, area.height];
     }
 
     public void generateEmptyGrid(string in_mode, int in_length, int in_width, int in_height, string in_name)
@@ -183,20 +185,20 @@ public class GridSystem : MonoBehaviour
         }
         else
         {
-            DataUtility.saveArea(length, width, height, currentGrid, areaName, buildable);
+            DataUtility.saveArea(area.length, area.width, area.height, currentGrid, area.areaName, area.buildable);
         }
     }
 
     public bool loadConfig(string in_area, int in_length, int in_width, int in_height, bool in_buildable)
     {
         unloadGrid();
-        areaName = in_area;
-        width = in_width;
-        height = in_height;
-        length = in_length;
-        buildable = in_buildable;
+        area.areaName = in_area;
+        area.width = in_width;
+        area.height = in_height;
+        area.length = in_length;
+        area.buildable = in_buildable;
 
-        currentGrid = new AreaIndex[length, width, height];
+        currentGrid = new AreaIndex[area.length, area.width, area.height];
         return true;
     }
 
@@ -204,13 +206,13 @@ public class GridSystem : MonoBehaviour
     public bool loadArea(GridSystem in_grid)
     {
 
-        areaName = in_grid.areaName;
-        width = in_grid.width;
-        height = in_grid.height;
-        length = in_grid.length;
-        buildable = in_grid.buildable;
+        area.areaName = in_grid.area.areaName;
+        area.width = in_grid.area.width;
+        area.height = in_grid.area.height;
+        area.length = in_grid.area.length;
+        area.buildable = in_grid.area.buildable;
 
-        currentGrid = new AreaIndex[length, width, height];
+        currentGrid = new AreaIndex[area.length, area.width, area.height];
 
         loadAreaHelper(in_grid.tempWrapperHolder.listOfgrids);
         return true;
@@ -218,9 +220,9 @@ public class GridSystem : MonoBehaviour
 
     public void loadLocalPlants()
     {
-        if (DataCache.inPlayPlants.ContainsKey(areaName))
+        if (DataCache.inPlayPlants.ContainsKey(area.areaName))
         {
-            foreach (Plant it_plant in DataCache.inPlayPlants[areaName])
+            foreach (Plant it_plant in DataCache.inPlayPlants[area.areaName])
             {
                 {
                     if (currentGrid[it_plant.x, it_plant.y, it_plant.z].index.TryGetComponent<Soil>(out Soil out_soil))
@@ -244,7 +246,7 @@ public class GridSystem : MonoBehaviour
             {
                 Destroy(obj.gameObject);
             }
-            areaName = null;
+            area.areaName = null;
         }
     }
 
@@ -256,11 +258,11 @@ public class GridSystem : MonoBehaviour
     {
 
         //print(length + " , " + width + " , " + height);
-        for (int x = 0; x < length; x++)
+        for (int x = 0; x < area.length; x++)
         {
-            for (int y = 0; y < width; y++)
+            for (int y = 0; y < area.width; y++)
             {
-                for (int z = 0; z < height; z++)
+                for (int z = 0; z < area.height; z++)
                 {
                     //print(x + " , " + y + " , " + z);
                     currentGrid[x, y, z] = new AreaIndex(x, y, z, null, null, false, false);
@@ -283,11 +285,11 @@ public class GridSystem : MonoBehaviour
 
     public void generateBorder()
     {
-        for (int row = 0; row < length; row++)
+        for (int row = 0; row < area.length; row++)
         {
-            if (row == 0 || row == length - 1)
+            if (row == 0 || row == area.length - 1)
             {
-                for (int column = 0; column < width; column++)
+                for (int column = 0; column < area.width; column++)
                 {
                     generateObject(currentGrid[row, column, 0], "Border", false, false);
                     generateObject(currentGrid[row, column, 2], "Border", false, false);
@@ -297,19 +299,19 @@ public class GridSystem : MonoBehaviour
             {
                 generateObject(currentGrid[row, 0, 0], "Border", false, false);
                 generateObject(currentGrid[row, 0, 2], "Border", false, false);
-                generateObject(currentGrid[row, width - 1, 0], "Border", false, false);
-                generateObject(currentGrid[row, width - 1, 2], "Border", false, false);
+                generateObject(currentGrid[row, area.width - 1, 0], "Border", false, false);
+                generateObject(currentGrid[row, area.width - 1, 2], "Border", false, false);
             }
         }
     }
 
     public void generateParameter(string in_input)
     {
-        for (int row = 1; row < length - 1; row++)
+        for (int row = 1; row < area.length - 1; row++)
         {
-            if (row == 1 || row == length - 2)
+            if (row == 1 || row == area.length - 2)
             {
-                for (int column = 2; column < width - 2; column++)
+                for (int column = 2; column < area.width - 2; column++)
                 {
                     generateObject(currentGrid[row, column, 0], in_input, false, false);
                     generateObject(currentGrid[row, column, 1], in_input, false, false);
@@ -320,8 +322,8 @@ public class GridSystem : MonoBehaviour
                 generateObject(currentGrid[row, 1, 0], in_input, false, false);
                 generateObject(currentGrid[row, 1, 1], in_input, false, false);
 
-                generateObject(currentGrid[row, width - 2, 0], in_input, false, false);
-                generateObject(currentGrid[row, width - 2, 1], in_input, false, false);
+                generateObject(currentGrid[row, area.width - 2, 0], in_input, false, false);
+                generateObject(currentGrid[row, area.width - 2, 1], in_input, false, false);
             }
         }
     }
@@ -371,7 +373,7 @@ public class GridSystem : MonoBehaviour
             {
                 Plant get_plant = temp_plant.getPlant();
                 out_soil.loadPlant(get_plant);
-                if (DataCache.inPlayPlants.TryGetValue(areaName, out List<Plant> out_list))
+                if (DataCache.inPlayPlants.TryGetValue(area.areaName, out List<Plant> out_list))
                 {
                     out_list.Add(get_plant);
                 }
@@ -379,7 +381,7 @@ public class GridSystem : MonoBehaviour
                 {
                     List<Plant> new_list = new List<Plant>();
                     new_list.Add(get_plant);
-                    DataCache.inPlayPlants.Add(areaName, new_list);
+                    DataCache.inPlayPlants.Add(area.areaName, new_list);
                 }
             }
             else
@@ -428,14 +430,14 @@ public class GridSystem : MonoBehaviour
     //Local generation NPC in the area, in creator mode
     public void spawnNewNPC(Vector3 in_position, Quaternion in_rotation, string in_name, string in_type)
     {
-        GameObject temp_npc = NPCFactory.generateNewNPC(in_position, in_rotation, in_name, in_type, areaName);
+        GameObject temp_npc = NPCFactory.generateNewNPC(in_position, in_rotation, in_name, in_type, area.areaName);
         temp_npc.transform.SetParent(NPCList);
     }
 
     //Local generation Storage in the area, in creator mode
     public GameObject spawnNewStorage(Vector3 in_position, Quaternion in_rotation, string in_name, string in_type)
     {
-        GameObject temp_storage = StorageFactory.generateNewStorage(in_position, in_rotation, in_name, in_type, areaName);
+        GameObject temp_storage = StorageFactory.generateNewStorage(in_position, in_rotation, in_name, in_type, area.areaName);
         temp_storage.transform.SetParent(itemList);
         return temp_storage;
     }
@@ -443,11 +445,11 @@ public class GridSystem : MonoBehaviour
     //Local spawning of npc into the area
     public void spawnNPCInArea()
     {
-        if (DataCache.inPlayNPC.ContainsKey(areaName))
+        if (DataCache.inPlayNPC.ContainsKey(area.areaName))
         {
-            foreach (Entity it_npc in DataCache.inPlayNPC[areaName])
+            foreach (Entity it_npc in DataCache.inPlayNPC[area.areaName])
             {
-                GameObject temp_npc = NPCFactory.loadNPC(it_npc, areaName);
+                GameObject temp_npc = NPCFactory.loadNPC(it_npc, area.areaName);
                 temp_npc.transform.SetParent(NPCList);
             }
         }
@@ -456,11 +458,11 @@ public class GridSystem : MonoBehaviour
     //Local spawning of storage into the area
     public void loadStorageInArea()
     {
-        if (DataCache.inPlayStorages.ContainsKey(areaName))
+        if (DataCache.inPlayStorages.ContainsKey(area.areaName))
         {
-            foreach (Storage it_storage in DataCache.inPlayStorages[areaName])
+            foreach (Storage it_storage in DataCache.inPlayStorages[area.areaName])
             {
-                GameObject temp_npc = StorageFactory.loadStorage(it_storage, areaName);
+                GameObject temp_npc = StorageFactory.loadStorage(it_storage, area.areaName);
                 temp_npc.transform.SetParent(NPCList);
             }
         }
@@ -482,7 +484,7 @@ public class GridSystem : MonoBehaviour
     {
         int x, y, z;
         getXY(worldPosition, out x, out y, out z);
-        if (x >= 0 && x < length && y >= 0 && y < width && z >= 0 && z < height)
+        if (x >= 0 && x < area.length && y >= 0 && y < area.width && z >= 0 && z < area.height)
             return currentGrid[x, y, z];
         else
             return null;
@@ -503,23 +505,23 @@ public class GridSystem : MonoBehaviour
     public Dictionary<string, AreaIndex> getNeighbors(AreaIndex in_currentIndex)
     {
         Dictionary<string, AreaIndex> neighbors = new Dictionary<string, AreaIndex>();
-        if (in_currentIndex.y + 1 < width && in_currentIndex.y + 1 >= 0)
+        if (in_currentIndex.y + 1 < area.width && in_currentIndex.y + 1 >= 0)
         {
             neighbors.Add("West", currentGrid[in_currentIndex.x, in_currentIndex.y + 1, in_currentIndex.z]);
-            if (in_currentIndex.x + 1 < length)
+            if (in_currentIndex.x + 1 < area.length)
                 neighbors.Add("Northwest", currentGrid[in_currentIndex.x + 1, in_currentIndex.y + 1, in_currentIndex.z]);
             if (in_currentIndex.x - 1 >= 0)
                 neighbors.Add("Southwest", currentGrid[in_currentIndex.x - 1, in_currentIndex.y + 1, in_currentIndex.z]);
         }
-        if (in_currentIndex.y - 1 >= 0 && in_currentIndex.y - 1 < width)
+        if (in_currentIndex.y - 1 >= 0 && in_currentIndex.y - 1 < area.width)
         {
             neighbors.Add("East", currentGrid[in_currentIndex.x, in_currentIndex.y - 1, in_currentIndex.z]);
-            if (in_currentIndex.x + 1 < length)
+            if (in_currentIndex.x + 1 < area.length)
                 neighbors.Add("Northeast", currentGrid[in_currentIndex.x + 1, in_currentIndex.y - 1, in_currentIndex.z]);
             if (in_currentIndex.x - 1 >= 0)
                 neighbors.Add("Southeast", currentGrid[in_currentIndex.x - 1, in_currentIndex.y - 1, in_currentIndex.z]);
         }
-        if (in_currentIndex.x + 1 < length)
+        if (in_currentIndex.x + 1 < area.length)
             neighbors.Add("North", currentGrid[in_currentIndex.x + 1, in_currentIndex.y, in_currentIndex.z]);
         if (in_currentIndex.x - 1 >= 0)
             neighbors.Add("South", currentGrid[in_currentIndex.x - 1, in_currentIndex.y, in_currentIndex.z]);
@@ -608,7 +610,7 @@ public class GridSystem : MonoBehaviour
     {
         if (DataCache.inPlayAreaItem != null)
         {
-            if (DataCache.inPlayAreaItem.TryGetValue(areaName, out List<Item> out_list))
+            if (DataCache.inPlayAreaItem.TryGetValue(area.areaName, out List<Item> out_list))
             {
                 foreach (Item it_item in out_list)
                 {
@@ -683,7 +685,25 @@ public class GridSystem : MonoBehaviour
 
 }
 
+public class Area
+{
+    public string areaName;
+    public int length;
+    public int width;
+    public int height;
+    public bool buildable;
 
+    public AreaDTO toDTO()
+    {
+        AreaDTO newWrapper = new AreaDTO();
+        newWrapper.areaName = areaName;
+        newWrapper.length = length;
+        newWrapper.width = width;
+        newWrapper.height = height;
+        newWrapper.buildable = buildable;
+        return newWrapper;
+    }
+}
 [Serializable]
 public class AreaIndex
 {
@@ -721,6 +741,19 @@ public class AreaIndex
     public string ToString()
     {
         return x + " , " + y + " , " + z;
+    }
+
+    public AreaIndexDTO toDTO()
+    {
+        AreaIndexDTO newWrapper = new AreaIndexDTO();
+        newWrapper.x = x;
+        newWrapper.y = y;
+        newWrapper.z = z;
+        newWrapper.objectName = objectName;
+        newWrapper.destructable = destructable;
+        newWrapper.pickable = pickable;
+        newWrapper.state = state;
+        return newWrapper;
     }
 }
 

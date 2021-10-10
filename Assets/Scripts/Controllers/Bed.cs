@@ -1,5 +1,5 @@
 using UnityEngine;
-
+using System.Collections.Generic;
 /**
  * 
  * Controller for beds
@@ -12,7 +12,9 @@ public class Bed : MonoBehaviour, IInteractable
 
     public void interact(PlayerController getInteractor, bool in_modified)
     {
-        Network.sendPacket(doCommands.action, "New day");
+        Dictionary<string, string> payload = new Dictionary<string, string>();
+        payload["data"] = "New day";
+        Network.sendPacket(doCommands.action, "New day", payload);
         //if (ts.newDay())
         //{
         //    getInteractor.recover();

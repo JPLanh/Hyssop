@@ -153,11 +153,11 @@ exports.newDay = async function(in_socket, in_world){
 			if (it_world["worldName"] === in_world){
 				payload["action"] = "Old day end";
 				await dayEnd(it_world);
-				sendPacket(in_socket, "Acknowledge", "Old day end");
+				sendPacket(in_socket, "Acknowledge", payload);
 				setTimeout(async () => { 
 					payload["action"] = "New day begin";
 					await dayBegin(it_world);
-				sendPacket(in_socket, "Acknowledge", "New day begin");
+				sendPacket(in_socket, "Acknowledge", payload);
 				}, 1000);
 			}
 		})

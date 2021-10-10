@@ -1,6 +1,7 @@
 using UnityEngine;
+using System.Collections.Generic;
 
-public class tradeMenuListener : MonoBehaviour, IActionListener, IServerListener
+public class TradeMenu : MonoBehaviour, IActionListener, IServerListener
 {
     public GameObject currentMenu;
     public GameObject leftObjectList;
@@ -165,19 +166,25 @@ public class tradeMenuListener : MonoBehaviour, IActionListener, IServerListener
         switch (parser[0])
         {
             case "Select":
+                Dictionary<string, string> payload = new Dictionary<string, string>();
                 if (parser[1].Equals("Left"))
                 {
                     if (!Network.isConnected) trade(currentPlayer.playerEntity.backpack, focusStorage.storage.inventory, currentPlayer.playerEntity.backpack.items[int.Parse(parser[2])]);
                     else
-                        Network.trade("Entity", currentPlayer.playerEntity.entityName, "Storage", focusStorage.name, currentPlayer.playerEntity.backpack.items[int.Parse(parser[2])].ItemObj._id,
+                    {
+                        Network.trade("Entity", currentPlayer.playerEntity.entityName, "Storage", focusStorage.name, currentPlayer.playerEntity.backpack.items[int.Parse(parser[2])]._id,
                             modifier ? currentPlayer.playerEntity.backpack.items[int.Parse(parser[2])].ItemObj.quantity : 1);
+                    }
+
                 }
                 else if (parser[1].Equals("Right"))
                 {
                     if (!Network.isConnected) trade(focusStorage.storage.inventory, currentPlayer.playerEntity.backpack, focusStorage.storage.inventory.items[int.Parse(parser[2])]);
                     else
-                        Network.trade("Storage", focusStorage.name, "Entity", currentPlayer.playerEntity.entityName, focusStorage.storage.inventory.items[int.Parse(parser[2])].ItemObj._id,
+                    {
+                        Network.trade("Storage", focusStorage.name, "Entity", currentPlayer.playerEntity.entityName, focusStorage.storage.inventory.items[int.Parse(parser[2])]._id,
                             modifier ? focusStorage.storage.inventory.items[int.Parse(parser[2])].ItemObj.quantity : 1);
+                    }
                 }
                 break;
         }
@@ -239,21 +246,14 @@ public class tradeMenuListener : MonoBehaviour, IActionListener, IServerListener
             }
         }
 
-        if (Network.listOfStorageItem.Count > 0)
+        if (Network.listOfItems.Count > 0)
         {
-            networkListReceiver<ItemExistanceDTOWrapper> temp_wrapper = Network.listOfStorageItem.Dequeue();
-            switch (temp_wrapper.Action)
+            List<ItemExistanceDTOWrapper> temp_wrapper = Network.listOfItems.Dequeue();
+            foreach (ItemExistanceDTOWrapper it_item in temp_wrapper)
             {
-                case "Complete":
-                    loadPanel("Right", focusStorage.storage.inventory);
-                    break;
-                case "Load all storage item":
-                    foreach (ItemExistanceDTOWrapper it_item in temp_wrapper.objectList)
-                    {
-                        focusStorage.storage.inventory.items.Add(it_item);
-                    }
-                    break;
+                focusStorage.storage.inventory.items.Add(it_item);
             }
+            loadPanel("Right", focusStorage.storage.inventory);
         }
     }
 }

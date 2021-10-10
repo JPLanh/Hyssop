@@ -65,7 +65,6 @@ public class PlantFactory : MonoBehaviour
     public static void removeCrop(Plant in_plant)
     {
         //Fix this
-        print(in_plant.areaName);
         DataCache.inPlayPlants[in_plant.areaName].Remove(in_plant);
     }
 

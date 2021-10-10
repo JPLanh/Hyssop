@@ -22,7 +22,10 @@ public class StorageEntity : MonoBehaviour, IInteractable, IMenu
             getInteractor.canvas.tradeMenu.focusStorage = this;
             getInteractor.accessTrade();
             storage.inventory.items = new List<ItemExistanceDTOWrapper>();
-            Network.accessStorage("Storage", name);
+            Dictionary<string, string> payload = new Dictionary<string, string>();
+            payload["storageID"] = name;
+            Network.sendPacket(doCommands.storage, "Access", payload);
+//            Network.accessStorage("Storage", name);
         }
     }
 

@@ -10,6 +10,7 @@ using UnityEngine;
 [Serializable]
 public class Entity
 {
+    public string _id;
     public string entityName;
     public Vector3 position;
     public Quaternion rotation;
@@ -156,6 +157,7 @@ public class Entity
 [Serializable]
 public class EntityDTO
 {
+    public string _id;
     public string entityName;
     public Vector3 position;
     public Quaternion rotation;
@@ -178,6 +180,7 @@ public class EntityDTO
     public Entity getActual()
     {
         Entity temp_entity = new Entity();
+        temp_entity._id = _id;
         temp_entity.entityName = entityName;
         temp_entity.position = position;
         temp_entity.rotation = rotation;
