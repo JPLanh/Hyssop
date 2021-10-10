@@ -481,38 +481,46 @@ public class PlayerMenu : MonoBehaviour, IActionListener, IServerListener
                 ItemExistanceDTOWrapper tradeItem = shopList[int.Parse(parser[1])];
                 if (tradeItem != null)
                 {
-                    ItemExistanceDTOWrapper currencyTrade = currentPlayer.playerEntity.backpack.getItemByName("Silver");
-                    if (currencyTrade != null)
+
+                    if (currentPlayer.playerEntity.backpack.spaceAvailable(tradeItem))
                     {
-                        if (currencyTrade.ItemObj.quantity >= tradeItem.itemMarketObj.buyPrice)
+                        ItemExistanceDTOWrapper currencyTrade = currentPlayer.playerEntity.backpack.getItemByName("Silver");
+                        if (currencyTrade != null)
                         {
-                            //if (currentPlayer.playerEntity.backpack.createItem(currentPlayer.playerEntity.entityName, tradeItem.ItemObj.itemName, 1))
-                            //{
+                            if (currencyTrade.ItemObj.quantity >= tradeItem.itemMarketObj.buyPrice)
+                            {
+                                //if (currentPlayer.playerEntity.backpack.createItem(currentPlayer.playerEntity.entityName, tradeItem.ItemObj.itemName, 1))
+                                //{
 
-                            Network.trade("NPC", focusShop.currentNPC._id, "Entity", currentPlayer.playerEntity.entityName, tradeItem._id, 1);
-                            currentPlayer.playerEntity.backpack.localCreateItem(tradeItem.ItemObj.itemName, 1);
-//                            tradeItem.ItemObj.quantity -= 1;
-//                            currentPlayer.playerEntity.backpack.localCreateItem(currentPlayer.playerEntity.entityName, tradeItem.ItemObj.itemName, 1);
-                            Network.trade("Entity", currentPlayer.playerEntity.entityName, "NPC", focusShop.currentNPC._id, currencyTrade._id, tradeItem.itemMarketObj.buyPrice);
-                            currentPlayer.playerEntity.backpack.localCreateItem(currencyTrade.ItemObj.itemName, -tradeItem.itemMarketObj.buyPrice);
-                            //                            currentPlayer.playerEntity.backpack.localModifyItem(currencyTrade, tradeItem.itemMarketObj.buyPrice);
-                            //                                DataCache.adjustMarketPrice(tradeItem);
-                            currentPlayer.mainMenu.updateMenu();
+                                Network.trade("NPC", focusShop.currentNPC._id, "Entity", currentPlayer.playerEntity.entityName, tradeItem._id, 1);
+//                                currentPlayer.playerEntity.backpack.localCreateItem(tradeItem.ItemObj.itemName, 1);
+                                //                            tradeItem.ItemObj.quantity -= 1;
+                                //                            currentPlayer.playerEntity.backpack.localCreateItem(currentPlayer.playerEntity.entityName, tradeItem.ItemObj.itemName, 1);
+                                Network.trade("Entity", currentPlayer.playerEntity.entityName, "NPC", focusShop.currentNPC._id, currencyTrade._id, tradeItem.itemMarketObj.buyPrice);
+//                                currentPlayer.playerEntity.backpack.localCreateItem(currencyTrade.ItemObj.itemName, -tradeItem.itemMarketObj.buyPrice);
+                                //                            currentPlayer.playerEntity.backpack.localModifyItem(currencyTrade, tradeItem.itemMarketObj.buyPrice);
+                                //                                DataCache.adjustMarketPrice(tradeItem);
+                                currentPlayer.mainMenu.updateMenu();
 
-                            //}
-                            //else
-                            //{
-                            //    currentPlayer.toastNotifications.newNotification("Your bag is full");
-                            //}
+                                //}
+                                //else
+                                //{
+                                //    currentPlayer.toastNotifications.newNotification("Your bag is full");
+                                //}
+                            }
+                            else
+                            {
+                                currentPlayer.toastNotifications.newNotification("You do not have enough Silver");
+                            }
                         }
                         else
                         {
-                            currentPlayer.toastNotifications.newNotification("You do not have enough Silver");
+                            currentPlayer.toastNotifications.newNotification("You do not have any Silver");
                         }
                     }
                     else
                     {
-                        currentPlayer.toastNotifications.newNotification("You do not have any Silver");
+                        currentPlayer.toastNotifications.newNotification("You have no more bag space available for any new items.");
                     }
                 }
                 break;

@@ -86,7 +86,7 @@ public class AreaItemDTO
     public ItemDTO itemObj;
     public Vector3 position;
     public Quaternion rotation;
-    public string areaName;
+    public AreaDTO areaObj;
 }
 
 [Serializable]

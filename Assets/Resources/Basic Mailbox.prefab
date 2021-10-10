@@ -188,6 +188,7 @@ GameObject:
   - component: {fileID: 760396727372114650}
   - component: {fileID: 1786579164895123812}
   - component: {fileID: 7671033747978307960}
+  - component: {fileID: 6561386711946772759}
   m_Layer: 7
   m_Name: Basic Mailbox
   m_TagString: Untagged
@@ -239,21 +240,58 @@ MonoBehaviour:
   storage:
     areaName: 
     storageName: 
+    storageType: 
     state: 
     inventory:
       size: 0
       indexSelected: 0
-      items: []
     position: {x: 0, y: 0, z: 0}
     rotation: {x: 0, y: 0, z: 0, w: 0}
+  itemEntity: {fileID: 6561386711946772759}
   exitMenu: {fileID: 0}
   deliverPoint:
     areaName: 
     storageName: 
+    storageType: 
     state: 
     inventory:
       size: 0
       indexSelected: 0
-      items: []
     position: {x: 0, y: 0, z: 0}
     rotation: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &6561386711946772759
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8450032136926340201}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb2d28d555f03f54d8e257ab1c8307a6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  item:
+    _id: 
+    position: {x: 0, y: 0, z: 0}
+    rotation: {x: 0, y: 0, z: 0, w: 0}
+    areaObj:
+      worldObj:
+        worldName: 
+        time: 0
+        fullDayLength: 0
+        startTime: 0
+        timeRate: 0
+        timeStopped: 0
+        isDayEnd: 0
+        owner: 
+        dayEndHour: 0
+        dayEndMinute: 0
+        dayBeginHour: 0
+        dayBeginMinute: 0
+        Action: 
+      areaName: 
+      length: 0
+      width: 0
+      height: 0
+      buildable: 0

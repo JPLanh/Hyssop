@@ -5,7 +5,7 @@ using UnityEngine;
 public class ItemEntity : MonoBehaviour
 {
     [SerializeField]
-    public Item item;
+    public AreaItemDTO item;
     // Start is called before the first frame update
     void Start()
     {

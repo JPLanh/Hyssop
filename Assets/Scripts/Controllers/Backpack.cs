@@ -44,6 +44,24 @@ public class Backpack
         return addItem(getItem);
     }
 
+    public bool spaceAvailable(ItemExistanceDTOWrapper in_item)
+    {
+        ItemExistanceDTOWrapper out_item = items.Find(x => x.ItemObj.itemName.Equals(in_item.ItemObj.itemName));
+        if (out_item != null)
+        {
+            return true;
+        } else
+        {
+            if (items.Count < size)
+            {
+                return true;
+            } else
+            {
+                return false;
+            }
+        }
+
+    }
     public bool createItem(string in_binder, string getItemName, int in_amount)
     {
         ItemExistanceDTOWrapper getItem = ItemFactory.createItem(getItemName);
@@ -55,7 +73,6 @@ public class Backpack
 
         if (Network.isConnected)
         {
-            Debug.Log(getItemName);
             ItemExistanceDTOWrapper out_item = items.Find(x => x.ItemObj.itemName.Equals(getItemName));
             if (out_item != null)
             {

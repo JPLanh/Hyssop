@@ -347,7 +347,7 @@ async function processStorage(in_socket, in_param)
 async function trade(in_socket, in_param)
 {
 	let param = JSON.parse(in_param["data"]);
-	// console.log(param);
+//	console.log(param);
 			let get_trade;
 			switch(param["fromType"]){
 				case "Storage":
@@ -363,7 +363,7 @@ async function trade(in_socket, in_param)
 			let to_entity;
 			switch(param["toType"]){
 				case "Storage":
-					to_entity = areaItem.findOne({"_id": mongoose.Types.ObjectId(param["toName"])});
+					to_entity = areaItem.findOne({"itemObj._id": mongoose.Types.ObjectId(param["toName"])});
 					break;
 				case "Entity":
 					to_entity = character.findOne({"entityName": param["toName"]});
@@ -374,7 +374,7 @@ async function trade(in_socket, in_param)
 			}
 
 			Promise.all([get_trade, to_entity])
-			.then(async (res) =>{			
+			.then(async (res) =>{		
 				switch(param["toType"]){
 					case "Storage":
 						res.push(await itemExistance.findOne({"itemObj.itemName": res[0]["itemObj"]["itemName"], "storageObj._id": mongoose.Types.ObjectId(param["toName"])}).exec());
@@ -386,7 +386,7 @@ async function trade(in_socket, in_param)
 				}
 				return res;
 			})
-			.then(async (res) => {
+			.then(async (res) => {	
 				res[0]["itemObj"]["quantity"] -= parseInt(param["quantity"]);
 				if (res[2] != null){
 					res[2]["itemObj"]["quantity"] += parseInt(param["quantity"]);
@@ -397,7 +397,7 @@ async function trade(in_socket, in_param)
 					temp_item.quantity = param["quantity"];
 					switch(param["toType"]){
 						case "Storage":
-						res.push(await new itemExistance({"itemObj": temp_item, "storageObj": res[1]["itemObj"]}).save());
+							res.push(await new itemExistance({"itemObj": temp_item, "storageObj": res[1]["itemObj"]}).save());
 						break;
 						case "Entity":
 							res.push(await new itemExistance({"itemObj": temp_item, "binder": res[1]}).save());
@@ -417,8 +417,8 @@ async function trade(in_socket, in_param)
 			.then(async (res) => {
 				// console.log(res[2]);
 				// console.log(res[0]);
-				// sendPacket(in_socket, "Item", res[2]);
-				// sendPacket(in_socket, "Item", res[0]);
+				sendPacket(in_socket, "Item", res[2]);
+				sendPacket(in_socket, "Item", res[0]);
 				// await getSocket.emit("Transfer Item", JSON.stringify(res[2]).replace(/"/g, "`"));
 				// await getSocket.emit("Transfer Item", JSON.stringify(res[0]).replace(/"/g, "`"));				
 			})

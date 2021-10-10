@@ -1,3 +1,4 @@
+using Newtonsoft.Json;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -175,14 +176,37 @@ public class InGameListener : MonoBehaviour, IServerListener
             }
         }
 
+        JsonSerializerSettings settings = new JsonSerializerSettings();
+        settings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
         if (!currentPlayer.canvas.tradeMenu.gameObject.activeInHierarchy)
         {
             if (Network.itemRetrieved.Count > 0)
             {
                 ItemExistanceDTOWrapper getItem = Network.itemRetrieved.Dequeue();
-                if (getItem.binder.entityName.Equals(Network.loadedCharacter.entityName))
+                print(currentPlayer.playerEntity.entityName + " , " + (getItem.binder.entityName));
+                if (currentPlayer.playerEntity.entityName.Equals(getItem.binder.entityName))
                 {
-                    currentPlayer.playerEntity.backpack.createItem(getItem);
+                    //                    currentPlayer.playerEntity.backpack.createItem(getItem);
+
+                    ItemExistanceDTOWrapper has_item = currentPlayer.playerEntity.backpack.items.Find(x => x.ItemObj.itemName == getItem.ItemObj.itemName);
+                    print(JsonConvert.SerializeObject(has_item, settings));
+                    print(JsonConvert.SerializeObject(getItem, settings));
+                    if (has_item != null)
+                    {
+
+                        if (getItem.ItemObj.quantity <= 0)
+                        {
+                            currentPlayer.playerEntity.backpack.items.Remove(has_item);
+                        }
+                        else
+                        {
+                            has_item.ItemObj.quantity = getItem.ItemObj.quantity;
+                        }
+                    }
+                    else
+                    {
+                        currentPlayer.playerEntity.backpack.items.Add(getItem);
+                    }
 
                 }
             }

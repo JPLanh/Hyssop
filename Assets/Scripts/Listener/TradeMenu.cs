@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using Newtonsoft.Json;
 
 public class TradeMenu : MonoBehaviour, IActionListener, IServerListener
 {
@@ -172,18 +173,27 @@ public class TradeMenu : MonoBehaviour, IActionListener, IServerListener
                     if (!Network.isConnected) trade(currentPlayer.playerEntity.backpack, focusStorage.storage.inventory, currentPlayer.playerEntity.backpack.items[int.Parse(parser[2])]);
                     else
                     {
-                        Network.trade("Entity", currentPlayer.playerEntity.entityName, "Storage", focusStorage.name, currentPlayer.playerEntity.backpack.items[int.Parse(parser[2])]._id,
+                        Network.trade("Entity", currentPlayer.playerEntity.entityName, "Storage", focusStorage.itemEntity.item.itemObj._id, currentPlayer.playerEntity.backpack.items[int.Parse(parser[2])]._id,
                             modifier ? currentPlayer.playerEntity.backpack.items[int.Parse(parser[2])].ItemObj.quantity : 1);
+
                     }
 
                 }
                 else if (parser[1].Equals("Right"))
                 {
-                    if (!Network.isConnected) trade(focusStorage.storage.inventory, currentPlayer.playerEntity.backpack, focusStorage.storage.inventory.items[int.Parse(parser[2])]);
+                    if (currentPlayer.playerEntity.backpack.spaceAvailable(focusStorage.storage.inventory.items[int.Parse(parser[2])]))
+                    {
+                        if (!Network.isConnected) 
+                            trade(focusStorage.storage.inventory, currentPlayer.playerEntity.backpack, focusStorage.storage.inventory.items[int.Parse(parser[2])]);
+                        else
+                        {
+                            Network.trade("Storage", focusStorage.itemEntity.item.itemObj._id, "Entity", currentPlayer.playerEntity.entityName, focusStorage.storage.inventory.items[int.Parse(parser[2])]._id,
+                                modifier ? focusStorage.storage.inventory.items[int.Parse(parser[2])].ItemObj.quantity : 1);
+                        }
+                    }
                     else
                     {
-                        Network.trade("Storage", focusStorage.name, "Entity", currentPlayer.playerEntity.entityName, focusStorage.storage.inventory.items[int.Parse(parser[2])]._id,
-                            modifier ? focusStorage.storage.inventory.items[int.Parse(parser[2])].ItemObj.quantity : 1);
+                        currentPlayer.toastNotifications.newNotification("You have no more bag space available for any new items.");
                     }
                 }
                 break;
@@ -197,7 +207,7 @@ public class TradeMenu : MonoBehaviour, IActionListener, IServerListener
             ItemExistanceDTOWrapper new_wrapper = Network.itemRetrieved.Dequeue();
             if (new_wrapper.storageObj != null)
             {
-                if (focusStorage.name.Equals(new_wrapper.storageObj._id))
+                if (focusStorage.itemEntity.item.itemObj._id.Equals(new_wrapper.storageObj._id))
                 {
                     ItemExistanceDTOWrapper getItem = focusStorage.storage.inventory.items.Find(x => x.ItemObj.itemName == new_wrapper.ItemObj.itemName);
                     if (getItem != null)

@@ -90,8 +90,7 @@ public class GridSystem : MonoBehaviour
             temp_Obj.transform.SetParent(gameObjectList.transform);
             if (temp_Obj.TryGetComponent<ItemEntity>(out ItemEntity out_itemEntity))
             {
-                out_itemEntity.item = new Item(it_itemDTO.itemObj);
-                out_itemEntity.item._id = it_itemDTO._id;
+                out_itemEntity.item = it_itemDTO;
             }
             if (temp_Obj.TryGetComponent<Bed>(out Bed out_bed))
             {
@@ -608,26 +607,26 @@ public class GridSystem : MonoBehaviour
 
     public void loadItemInArea()
     {
-        if (DataCache.inPlayAreaItem != null)
-        {
-            if (DataCache.inPlayAreaItem.TryGetValue(area.areaName, out List<Item> out_list))
-            {
-                foreach (Item it_item in out_list)
-                {
-                    GameObject temp_Obj = Instantiate(Resources.Load<GameObject>(it_item.itemName), it_item.position, it_item.rotation);
-                    temp_Obj.name = temp_Obj.name.Replace("(Clone)", "");
-                    temp_Obj.transform.SetParent(gameObjectList.transform);
-                    if (temp_Obj.TryGetComponent<ItemEntity>(out ItemEntity out_itemEntity))
-                    {
-                        out_itemEntity.item = it_item;
-                    }
-                    if (temp_Obj.TryGetComponent<Bed>(out Bed out_bed))
-                    {
-                        out_bed.ts = ts;
-                    }
-                }
-            }
-        }
+        //if (DataCache.inPlayAreaItem != null)
+        //{
+        //    if (DataCache.inPlayAreaItem.TryGetValue(area.areaName, out List<Item> out_list))
+        //    {
+        //        foreach (Item it_item in out_list)
+        //        {
+        //            GameObject temp_Obj = Instantiate(Resources.Load<GameObject>(it_item.itemName), it_item.position, it_item.rotation);
+        //            temp_Obj.name = temp_Obj.name.Replace("(Clone)", "");
+        //            temp_Obj.transform.SetParent(gameObjectList.transform);
+        //            if (temp_Obj.TryGetComponent<ItemEntity>(out ItemEntity out_itemEntity))
+        //            {
+        //                out_itemEntity.item = it_item;
+        //            }
+        //            if (temp_Obj.TryGetComponent<Bed>(out Bed out_bed))
+        //            {
+        //                out_bed.ts = ts;
+        //            }
+        //        }
+        //    }
+        //}
     }
 
     public void removeObjectAtIndex(AreaIndex in_index)

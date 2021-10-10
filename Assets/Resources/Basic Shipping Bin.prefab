@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 4659243003911808851}
   - component: {fileID: 5827962687411936832}
   - component: {fileID: 6651651740875828783}
+  - component: {fileID: 2822331674721566810}
   m_Layer: 7
   m_Name: Basic Shipping Bin
   m_TagString: Untagged
@@ -46,11 +47,27 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   storage:
-    size: 0
-    indexSelected: 0
-    items: []
+    areaName: 
+    storageName: 
+    storageType: 
+    state: 
+    inventory:
+      size: 0
+      indexSelected: 0
+    position: {x: 0, y: 0, z: 0}
+    rotation: {x: 0, y: 0, z: 0, w: 0}
+  itemEntity: {fileID: 2822331674721566810}
   exitMenu: {fileID: 0}
-  deliverPoint: {fileID: 0}
+  deliverPoint:
+    areaName: 
+    storageName: 
+    storageType: 
+    state: 
+    inventory:
+      size: 0
+      indexSelected: 0
+    position: {x: 0, y: 0, z: 0}
+    rotation: {x: 0, y: 0, z: 0, w: 0}
 --- !u!65 &6651651740875828783
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -64,6 +81,18 @@ BoxCollider:
   serializedVersion: 2
   m_Size: {x: 1, y: 1, z: 1}
   m_Center: {x: 0, y: 0.5, z: 0}
+--- !u!114 &2822331674721566810
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1433761071810263052}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fb2d28d555f03f54d8e257ab1c8307a6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
 --- !u!1 &5401855164503023081
 GameObject:
   m_ObjectHideFlags: 0

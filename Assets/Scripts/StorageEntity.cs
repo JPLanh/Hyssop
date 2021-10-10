@@ -6,6 +6,7 @@ public class StorageEntity : MonoBehaviour, IInteractable, IMenu
 {
     public Storage storage = new Storage();
     //    public backpack storage = new backpack();
+    public ItemEntity itemEntity;
     [SerializeField] private GameObject exitMenu;
     private PlayerController activePC;
     private ArrayList acceptable;
@@ -23,7 +24,7 @@ public class StorageEntity : MonoBehaviour, IInteractable, IMenu
             getInteractor.accessTrade();
             storage.inventory.items = new List<ItemExistanceDTOWrapper>();
             Dictionary<string, string> payload = new Dictionary<string, string>();
-            payload["storageID"] = name;
+            payload["storageID"] = itemEntity.item.itemObj._id;
             Network.sendPacket(doCommands.storage, "Access", payload);
 //            Network.accessStorage("Storage", name);
         }
