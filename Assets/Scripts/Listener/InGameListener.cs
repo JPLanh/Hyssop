@@ -95,7 +95,10 @@ public class InGameListener : MonoBehaviour, IServerListener
                 currentGrid.loadAreaNPC(it_areaNpc);
                 count++;
             }
+
+
             currentPlayer.isLoading(false);
+            currentPlayer.loadTutorial();
         }
 
 

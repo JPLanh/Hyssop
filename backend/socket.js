@@ -130,7 +130,7 @@ module.exports = async function(socket){
 					return await character.find({"account": param["Username"]}).exec()	
 				})
 				.then(async (found_characters) => {
-					sendPacket(in_socket, "Character list", found_characters);
+					sendPacket(getSocket, "Character list", found_characters);
 				})
 				break;
 			}	

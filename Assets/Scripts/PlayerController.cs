@@ -19,7 +19,7 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
     [SerializeField] private float movementSpeed = 10.0f;
     [SerializeField] private float gravity = 20f;
     public Vector3 moveDirection;
-    public Vector3 rotation = Vector3.zero;
+//    public Vector3 rotation = Vector3.zero;
     [SerializeField]
     private float lookSensativity = 10f;
     private float lookXLimit = 50f;
@@ -140,9 +140,7 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
             playerEntity.backpack.createItem(name, "Small Watering Can", 1);
             playerEntity.backpack.createItem(name, "Coffee bean", 10);
             playerEntity.backpack.createItem(name, "Silver", 100);
-            playerEntity.state = "Player";
             holdingText.text = "Nothing";
-            newMessage("Jimmy", "Hi ho there! Welcome to the alpha version of this game, Move with WASD, and control your camera with the mouse (FPS logic much?). Anyways, M button will bring up your inventory and ESC will bring up setting menu. IT's not fully implemented but that's where you can go into the builder mode to build up your place.. it's clunky but i will finish it later. Lets go outside and proceed with the game.");
             save();
         }
         else
@@ -177,13 +175,14 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
 
     private void initThirdPersonView()
     {
+        playerVision.tpsRotation = new Vector3(0f, playerVision.fpsRotation.y, 0f);
         cameraCenter.SetParent(current_avatar.current_avatarEntity.avatar_head_camera);
         cameraCenter.transform.localPosition = new Vector3(0f, 0f, 0f);
         userHead.SetParent(cameraCenter);
-        userHead.localPosition = new Vector3(0f, 0f, .45f);
+        userHead.localRotation = Quaternion.Euler(playerVision.fpsRotation.y, playerVision.fpsRotation.x, 0);
         userHead.localRotation = Quaternion.Euler(0f, 0f, 0f);
 
-        playerVision.transform.localPosition = new Vector3(0f, 0f, 0f);
+        playerVision.transform.localPosition = new Vector3(0f, 0f, -2f);
         playerVision.cameraMode = "Third Person";
     }
     public void save()
@@ -272,6 +271,11 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
     {
 
             canvas.hub.staminaGauge.updateGauge(((float)(playerEntity.maxStamina - playerEntity.stamina) / playerEntity.maxStamina));
+        if (playerEntity.getHolding() == null)
+        {
+            holdingText.text = "Nothing";
+            playerEntity.holding = "";
+        }
             if (!string.IsNullOrEmpty(playerEntity.holding) && playerEntity.getHolding().ItemObj.itemName != null && !playerEntity.getHolding().ItemObj.itemName.Equals(""))
         {
             holdingText.text = playerEntity.getHolding().ItemObj.itemName.Equals("") ? "Nothing" : playerEntity.getHolding().ItemObj.itemName;
@@ -363,14 +367,15 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
             }
         }
 
-        if (Input.GetAxis("Mouse ScrollWheel") > 0f)
+        if (Input.GetAxis("Mouse ScrollWheel") > 0f && canRotate)
         {
             if (Vector3.Distance(playerVision.transform.position, userHead.transform.position) <= 2f)
             {
                 //cameraCenter.transform.localPosition = new Vector3(0f, 2f, .35f);
                 //playerVision.transform.localPosition = new Vector3(0f, 0f, 0f);
                 //rotation = Vector3.zero;
-                initFirstPersonView();
+                if (!playerVision.cameraMode.Equals("First Person"))
+                    initFirstPersonView();
             }
             else
             {
@@ -378,10 +383,13 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
             }
         }
 
-        if (Input.GetAxis("Mouse ScrollWheel") < 0f)
+        if (Input.GetAxis("Mouse ScrollWheel") < 0f && canRotate)
         {
+            if (!playerVision.cameraMode.Equals("Third Person"))
+            {
+                initThirdPersonView();
+            }
             playerVision.transform.position = Vector3.MoveTowards(playerVision.transform.position, userHead.transform.position, -15 * Time.deltaTime);
-            if (!playerVision.cameraMode.Equals("Third Person")) playerVision.cameraMode = "Third Person";
             //if (Vector3.Distance(playerVision.transform.position, userHead.transform.position) <= 2f)
             //{
             //    cameraCenter.transform.localRotation = Quaternion.Euler(Vector3.zero);
@@ -450,9 +458,13 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
         {
             case "Left":
                 transform.Rotate(0f, -rotateAmount, 0f);
+                if (playerVision.cameraMode.Equals("Third Person"))
+                    playerVision.fpsRotation.x += -rotateAmount;
                 break;
             case "Right":
                 transform.Rotate(0f, rotateAmount, 0f);
+                if (playerVision.cameraMode.Equals("Third Person"))
+                    playerVision.fpsRotation.x += rotateAmount;
                 break;
         }
     }
@@ -538,34 +550,26 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
     {
         if (canRotate)
         {
-            rotation.x += Input.GetAxis("Mouse X") * lookSensativity;
-            rotation.z = 0;
-
-            rotation.y += -Input.GetAxis("Mouse Y") * lookSensativity;
             switch (playerVision.cameraMode)
             {
                 case "First Person":
-                    rotation.y = Mathf.Clamp(rotation.y, -lookXLimit, lookXLimit);
-                    transform.eulerAngles = new Vector2(0, rotation.x);
-                    userHead.localRotation = Quaternion.Euler(rotation.y, 0, 0);
+                    playerVision.fpsRotation.x += Input.GetAxis("Mouse X") * lookSensativity;
+                    playerVision.fpsRotation.z = 0;
+
+                    playerVision.fpsRotation.y += -Input.GetAxis("Mouse Y") * lookSensativity;
+                    playerVision.fpsRotation.y = Mathf.Clamp(playerVision.fpsRotation.y, -lookXLimit, lookXLimit);
+                    transform.eulerAngles = new Vector2(0, playerVision.fpsRotation.x);
+                    userHead.localRotation = Quaternion.Euler(playerVision.fpsRotation.y, 0, 0);
                     break;
                 default:
-                    userHead.localRotation = Quaternion.Euler(rotation.y, rotation.x, 0);
+                    playerVision.tpsRotation.x += Input.GetAxis("Mouse X") * lookSensativity;
+                    playerVision.tpsRotation.z = 0;
+
+                    playerVision.tpsRotation.y += -Input.GetAxis("Mouse Y") * lookSensativity;
+                    userHead.localRotation = Quaternion.Euler(playerVision.tpsRotation.y, playerVision.tpsRotation.x, 0);
                     playerVision.transform.LookAt(cameraCenter.position);
                     break;
             }
-            //if (Vector3.Distance(playerVision.transform.position, cameraCenter.transform.position) <= 2f)
-            //{
-            //    rotation.y = Mathf.Clamp(rotation.y, -lookXLimit, lookXLimit);
-            //    transform.eulerAngles = new Vector2(0, rotation.x);
-            //    userHead.localRotation = Quaternion.Euler(rotation.y, 0, 0);
-            //}
-            //else
-            //{
-            //    userHead.localRotation = Quaternion.Euler(rotation.y, rotation.x, 0);
-            //    playerVision.transform.LookAt(cameraCenter.position);
-            //}
-
             AreaIndex get_grid = playerVision.getGridIndex();
             if (playerVision.focusPoint != Vector3.zero && playerVision.getGridIndex() != null)
             {
@@ -634,157 +638,6 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
     }
 
 
-    private void groundInteract()
-    {
-        if (!isPaused)
-        {
-            if (playerEntity.holding == null || playerEntity.getHolding().ItemObj.itemName.Equals(""))
-            {
-
-                if (playerVision.focusPoint != Vector3.zero && playerVision.getGridIndex().index != null)
-                {
-                    if (playerVision.getGridIndex().index.TryGetComponent<IPickable>(out IPickable out_pick))
-                    {
-                        out_pick.pickupCheck(playerVision.getGridIndex(), currentGrid, out string in_item, out string in_state);
-                        if (in_state != null)
-                        {
-                            if (Network.isConnected)
-                            {
-                                ActionWrapper new_action = new ActionWrapper();
-                                new_action.areaName = currentGrid.area.areaName;
-                                new_action.index = playerVision.getGridIndex();
-                                Network.sendPacket(doCommands.action, "Pick vegetation", new_action);
-//                                Network.doAction<ActionWrapper>("Index", new_action);
-                            }
-                            else
-                            {
-                                if (in_state.Equals("Grown"))
-                                {
-                                    current_avatar.current_avatarEntity.animator.SetBool("isPlanting", true);
-                                    actionProgression("Harvesting " + in_item, 2);
-                                }
-                                else if (in_state.Equals("Dead"))
-                                {
-                                    current_avatar.current_avatarEntity.animator.SetBool("isPlanting", true);
-                                    actionProgression("Removing " + in_item, 2);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            else
-            {
-                switch (playerEntity.getHolding().ItemObj.itemType)
-                {
-                    case "Bed":
-                        currentGrid.generateObject(playerVision.getGridIndex(), playerEntity.getHolding().ItemObj.itemName, true, true);
-                        playerEntity.backpack.modifyItem(playerEntity.getHolding(), 1);
-                        currentGrid.saveArea(Network.isConnected ? "Online" : "Offline");
-                        break;
-                    case "Path":
-                    case "Slab":
-                    case "Stair":
-                    case "Wall":
-                    case "Floor":
-                    case "Trigger":
-                        if (playerVision.getGridIndex().index == null)
-                        {
-                            currentGrid.generateObject(playerVision.getGridIndex(), playerEntity.getHolding().ItemObj.itemName, true, true);
-                            playerEntity.backpack.modifyItem(playerEntity.getHolding(), 1);
-                            currentGrid.saveArea(Network.isConnected ? "Online" : "Offline");
-                        }
-                        break;
-                    case "Fence":
-                        if (playerVision.getGridIndex().index == null)
-                        {
-                            currentGrid.generateObject(playerVision.getGridIndex(), "Wooden Fence", true, true);
-                            AreaIndex topIndex = currentGrid.getIndex(playerVision.getGridIndex().x, playerVision.getGridIndex().y, playerVision.getGridIndex().z + 1);
-                            currentGrid.generateObject(topIndex, "Wooden Fence", true, true);
-                            playerEntity.backpack.modifyItem(playerEntity.getHolding(), 1);
-                            currentGrid.saveArea(Network.isConnected ? "Online" : "Offline");
-                        }
-                        break;
-                    case "Placement Modifier Tool":
-                        if (playerVision.getGridIndex().index != null)
-                        {
-                            playerVision.getGridIndex().pickable = playerVision.getGridIndex().pickable ? false : true;
-                        }
-                        break;
-                    case "Action Modifier Tool":
-                        if (playerVision.getGridIndex().index != null)
-                        {
-                            if (playerVision.getGridIndex().index.TryGetComponent<IActions>(out IActions out_action))
-                            {
-                                out_action.modifyAction(playerVision.getGridIndex(), mainMenu);
-                                Cursor.lockState = CursorLockMode.None;
-                                canRotate = false;
-                                canMove = false;
-                                isPaused = true;
-                            }
-                        }
-                        break;
-
-                    case "Pickaxe":
-                        if (playerVision.getGridIndex().index != null)
-                        {
-                            if (playerVision.getGridIndex().index.TryGetComponent<WorldResource>(out WorldResource getResource))
-                            {
-                                if (getResource.type.Equals("Stone"))
-                                {
-                                    if (getResource.damage(25))
-                                    {
-                                        Destroy(playerVision.getGridIndex().index);
-                                        playerVision.getGridIndex().index = null;
-                                    };
-                                }
-                            }
-                        }
-                        break;
-                    case "Shovel":
-                        if (playerVision.getGridIndex().index == null)
-                        {
-                            actionProgression("Plowing Land", 3);
-                            current_avatar.current_avatarEntity.animator.SetBool("isPlowing", true);
-                        }
-                        break;
-                    case "Seed":
-                        if (playerVision.getGridIndex().index != null)
-                        {
-                            if (playerVision.getGridIndex().index.TryGetComponent<Soil>(out Soil getSoil))
-                            {
-                                actionProgression("Planting " + playerEntity.getHolding().ItemObj.itemName, 3);
-                                current_avatar.current_avatarEntity.animator.SetBool("isPlanting", true);
-                            }
-                        }
-                        break;
-                    case "Watering Can":
-                        if (playerVision.getGridIndex().index != null)
-                        {
-                            if (playerVision.getGridIndex().index.TryGetComponent<Soil>(out Soil getSoil))
-                            {
-                                if (playerEntity.getHolding().ItemObj.capacity > 0)
-                                {
-                                    current_avatar.current_avatarEntity.animator.SetBool("isWatering", true);
-                                    actionProgression("Watering", 3);
-                                }
-                                else
-                                {
-                                    toastNotifications.newNotification("Your " + playerEntity.getHolding().ItemObj.itemName + " has no more water.");
-                                }
-                            }
-                            else if (playerVision.getGridIndex().index.TryGetComponent<Well>(out Well out_well))
-                            {
-                                actionProgression("Refilling", (int)(playerEntity.getHolding().ItemObj.maxCapacity / 10));
-                            }
-                        }
-
-                        break;
-                }
-            }
-        }
-    }
-
     public void actionProgression(string in_action, int in_seconds)
     {
         if (currentGrid.area.buildable)
@@ -795,7 +648,7 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
             }
             else
             {
-                if (playerEntity.holding != null && (playerEntity.getHolding().ItemObj.itemName != null || !playerEntity.getHolding().ItemObj.itemName.Equals("Nothing")))
+                if (!string.IsNullOrEmpty(playerEntity.holding) && (playerEntity.getHolding() != null || !playerEntity.getHolding().ItemObj.itemName.Equals("Nothing")))
                 {
                     if (playerEntity.getHolding().ItemObj.maxDurability > 0 && playerEntity.getHolding().ItemObj.durability <= 0)
                     {
@@ -820,129 +673,6 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
             toastNotifications.newNotification("Unable to perform that action here");
     }
 
-    public void doAction(string in_action)
-    {
-        string[] parser = in_action.Split(' ');
-
-        AreaIndexDTO newWrapper = null;
-        if (parser[0].Equals("Planting"))
-        {
-            if (playerVision.getGridIndex().index.TryGetComponent<Soil>(out Soil getSoil))
-            {
-                if (Network.isConnected)
-                {
-                    newWrapper = playerVision.getGridIndex().toDTO();
-                    newWrapper.areaObj = currentGrid.area.toDTO();
-                    newWrapper.state = "Plant " + playerEntity.getHolding().ItemObj.itemName;
-                    playerEntity.stamina -= 5;
-                    current_avatar.current_avatarEntity.animator.SetBool("isPlanting", false);
-                    playerEntity.backpack.modifyItem(playerEntity.getHolding(), 1);
-                    Network.sendPacket<AreaIndexDTO>(doCommands.index, "Plant", newWrapper);
-                }
-                else
-                {
-                    if (getSoil.plantSeed(currentGrid, playerVision.getGridIndex(), PlantFactory.retrievePlant(playerEntity.getHolding().ItemObj.itemName)))
-                    {
-                        getSoil.currentGridIndex = playerVision.getGridIndex();
-                        playerVision.getGridIndex().state = playerEntity.getHolding().ItemObj.itemName;
-                        playerEntity.stamina -= 5;
-                        playerEntity.backpack.modifyItem(playerEntity.getHolding(), 1);
-                    }
-                }
-            }
-        }
-        else if (parser[0].Equals("Removing"))
-        {
-            string temp_pickup = in_action.Replace(parser[0] + " ", "");
-            if (temp_pickup != null || !temp_pickup.Equals("Nothing"))
-            {
-
-                if (playerVision.getGridIndex().index.TryGetComponent<Soil>(out Soil out_soil))
-                {
-                    PlantFactory.removeCrop(out_soil.plant);
-
-
-                    currentGrid.removeObjectAtIndex(playerVision.getGridIndex());
-                    newWrapper = playerVision.getGridIndex().toDTO();
-                    newWrapper.areaObj = currentGrid.area.toDTO();
-                    newWrapper.state = "Harvest";
-                    current_avatar.current_avatarEntity.animator.SetBool("isPlanting", false);
-                    Network.sendPacket<AreaIndexDTO>(doCommands.index, "Harvest", newWrapper);
-                }
-            }
-        }
-        else if (parser[0].Equals("Harvesting"))
-        {
-            string temp_pickup = in_action.Replace(parser[0] + " ", "");
-            if (temp_pickup != null || !temp_pickup.Equals("Nothing"))
-            {
-                if (playerVision.getGridIndex().index.TryGetComponent<Soil>(out Soil out_soil))
-                {
-                    if (Network.isConnected)
-                    {
-                        DataCache.plantCache.TryGetValue(temp_pickup, out Plant out_plant);
-
-                        playerEntity.backpack.createItem(name, out_plant.plantName, Random.Range(2, 4));
-                        currentGrid.removeObjectAtIndex(playerVision.getGridIndex());
-                        newWrapper = playerVision.getGridIndex().toDTO();
-                        newWrapper.areaObj = currentGrid.area.toDTO();
-                        newWrapper.state = "Harvest";
-                        current_avatar.current_avatarEntity.animator.SetBool("isPlanting", false);
-                        Network.sendPacket<AreaIndexDTO>(doCommands.index, "Harvest", newWrapper);
-                    }
-                    else
-                    {
-                        if (playerEntity.backpack.createItem(name, temp_pickup, Random.Range(2, 4)))
-                        {
-                            //                        PlantFactory.removeCrop(out_soil.plant);
-                            Destroy(playerVision.getGridIndex().index);
-                            playerVision.getGridIndex().index = null;
-                            playerVision.getGridIndex().objectName = null;
-                            currentGrid.saveArea(Network.isConnected ? "Online" : "Offline");
-                        }
-                        else
-                        {
-                            toastNotifications.newNotification("Your bag is full");
-                        }
-                    }
-
-                }
-            }
-        }
-        else
-        {
-            switch (in_action)
-            {
-                case "Plowing Land":
-                    currentGrid.generateObject(playerVision.getGridIndex(), "Soil", true, true);
-                    newWrapper = playerVision.getGridIndex().toDTO();
-                    newWrapper.areaObj = currentGrid.area.toDTO();
-                    newWrapper.state = "Plow";
-                    current_avatar.current_avatarEntity.animator.SetBool("isPlowing", false);
-                    Network.sendPacket<AreaIndexDTO>(doCommands.index, "Plow", newWrapper);
-                    useHolding(2, 5);
-
-                    break;
-                case "Watering":
-                    if (playerVision.getGridIndex().index.TryGetComponent<Soil>(out Soil getSoil))
-                    {
-                        playerEntity.getHolding().ItemObj.capacity -= 1;
-                        newWrapper = playerVision.getGridIndex().toDTO();
-                        newWrapper.areaObj = currentGrid.area.toDTO();
-                        newWrapper.state = "Water";
-                        current_avatar.current_avatarEntity.animator.SetBool("isWatering", false);
-                        Network.sendPacket<AreaIndexDTO>(doCommands.index, "Water", newWrapper);
-                        useHolding(2, 5);
-                    }
-                    break;
-                case "Refilling":
-                    playerVision.selectInteractable.reaction(this);
-                    current_avatar.current_avatarEntity.animator.SetBool("isWatering", false);
-                    useHolding(1, 5);
-                    break;
-            }
-        }
-    }
 
     private void useHolding(int in_durability, int in_stamina)
     {
@@ -1165,6 +895,288 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
         return this;
     }
 
+    private void groundInteract()
+    {
+        if (!isPaused)
+        {
+            //fix this when getholding is null
+            if (string.IsNullOrEmpty(playerEntity.holding) || playerEntity.getHolding().ItemObj.itemName.Equals(""))
+            {
+
+                if (playerVision.focusPoint != Vector3.zero && playerVision.getGridIndex().index != null)
+                {
+                    if (playerVision.getGridIndex().index.TryGetComponent<IPickable>(out IPickable out_pick))
+                    {
+                        out_pick.pickupCheck(playerVision.getGridIndex(), currentGrid, out string in_item, out string in_state);
+                        if (in_state != null)
+                        {
+                            if (Network.isConnected)
+                            {
+                                ActionWrapper new_action = new ActionWrapper();
+                                new_action.areaName = currentGrid.area.areaName;
+                                new_action.index = playerVision.getGridIndex();
+                                Network.sendPacket(doCommands.action, "Pick vegetation", new_action);
+                                //                                Network.doAction<ActionWrapper>("Index", new_action);
+                            }
+                            else
+                            {
+                                if (in_state.Equals("Grown"))
+                                {
+                                    current_avatar.current_avatarEntity.animator.SetBool("isPlanting", true);
+                                    actionProgression("Harvesting " + in_item, 2);
+                                }
+                                else if (in_state.Equals("Dead"))
+                                {
+                                    current_avatar.current_avatarEntity.animator.SetBool("isPlanting", true);
+                                    actionProgression("Removing " + in_item, 2);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                switch (playerEntity.getHolding().ItemObj.itemType)
+                {
+                    case "Bed":
+                        currentGrid.generateObject(playerVision.getGridIndex(), playerEntity.getHolding().ItemObj.itemName, true, true);
+                        playerEntity.backpack.modifyItem(playerEntity.getHolding(), 1);
+                        currentGrid.saveArea(Network.isConnected ? "Online" : "Offline");
+                        break;
+                    case "Path":
+                    case "Slab":
+                    case "Stair":
+                    case "Wall":
+                    case "Floor":
+                    case "Trigger":
+                        if (playerVision.getGridIndex().index == null)
+                        {
+                            currentGrid.generateObject(playerVision.getGridIndex(), playerEntity.getHolding().ItemObj.itemName, true, true);
+                            playerEntity.backpack.modifyItem(playerEntity.getHolding(), 1);
+                            currentGrid.saveArea(Network.isConnected ? "Online" : "Offline");
+                        }
+                        break;
+                    case "Fence":
+                        if (playerVision.getGridIndex().index == null)
+                        {
+                            currentGrid.generateObject(playerVision.getGridIndex(), "Wooden Fence", true, true);
+                            AreaIndex topIndex = currentGrid.getIndex(playerVision.getGridIndex().x, playerVision.getGridIndex().y, playerVision.getGridIndex().z + 1);
+                            currentGrid.generateObject(topIndex, "Wooden Fence", true, true);
+                            playerEntity.backpack.modifyItem(playerEntity.getHolding(), 1);
+                            currentGrid.saveArea(Network.isConnected ? "Online" : "Offline");
+                        }
+                        break;
+                    case "Placement Modifier Tool":
+                        if (playerVision.getGridIndex().index != null)
+                        {
+                            playerVision.getGridIndex().pickable = playerVision.getGridIndex().pickable ? false : true;
+                        }
+                        break;
+                    case "Action Modifier Tool":
+                        if (playerVision.getGridIndex().index != null)
+                        {
+                            if (playerVision.getGridIndex().index.TryGetComponent<IActions>(out IActions out_action))
+                            {
+                                out_action.modifyAction(playerVision.getGridIndex(), mainMenu);
+                                Cursor.lockState = CursorLockMode.None;
+                                canRotate = false;
+                                canMove = false;
+                                isPaused = true;
+                            }
+                        }
+                        break;
+
+                    case "Pickaxe":
+                        if (playerVision.getGridIndex().index != null)
+                        {
+                            if (playerVision.getGridIndex().index.TryGetComponent<WorldResource>(out WorldResource getResource))
+                            {
+                                if (getResource.type.Equals("Stone"))
+                                {
+                                    if (getResource.damage(25))
+                                    {
+                                        Destroy(playerVision.getGridIndex().index);
+                                        playerVision.getGridIndex().index = null;
+                                    };
+                                }
+                            }
+                        }
+                        break;
+                    case "Shovel":
+                        if (playerVision.getGridIndex().index == null)
+                        {
+
+                            if (playerVision.getGridIndex().index == null)
+                            {
+                                actionProgression("Plowing Land", 3);
+                                current_avatar.current_avatarEntity.animator.SetBool("isPlowing", true);
+                            }
+                        }
+                        break;
+                    case "Seed":
+                        if (playerVision.getGridIndex().index != null)
+                        {
+                            if (playerVision.getGridIndex().index.TryGetComponent<Soil>(out Soil getSoil))
+                            {
+                                if (string.IsNullOrEmpty(getSoil.plant.plantName))
+                                {
+                                    actionProgression("Planting " + playerEntity.getHolding().ItemObj.itemName, 3);
+                                    current_avatar.current_avatarEntity.animator.SetBool("isPlanting", true);
+                                }
+                            }
+                        }
+                        break;
+                    case "Watering Can":
+                        if (playerVision.getGridIndex().index != null)
+                        {
+                            if (playerVision.getGridIndex().index.TryGetComponent<Soil>(out Soil getSoil))
+                            {
+                                if (playerEntity.getHolding().ItemObj.capacity > 0)
+                                {
+                                    current_avatar.current_avatarEntity.animator.SetBool("isWatering", true);
+                                    actionProgression("Watering", 3);
+                                }
+                                else
+                                {
+                                    toastNotifications.newNotification("Your " + playerEntity.getHolding().ItemObj.itemName + " has no more water.");
+                                }
+                            }
+                            else if (playerVision.getGridIndex().index.TryGetComponent<Well>(out Well out_well))
+                            {
+                                actionProgression("Refilling", (int)(playerEntity.getHolding().ItemObj.maxCapacity / 10));
+                            }
+                        }
+
+                        break;
+                }
+            }
+        }
+    }
+
+    public void doAction(string in_action)
+    {
+        string[] parser = in_action.Split(' ');
+
+        AreaIndexDTO newWrapper = null;
+        if (parser[0].Equals("Planting"))
+        {
+            if (playerVision.getGridIndex().index.TryGetComponent<Soil>(out Soil getSoil))
+            {
+                if (Network.isConnected)
+                {
+                        newWrapper = playerVision.getGridIndex().toDTO();
+                        newWrapper.areaObj = currentGrid.area.toDTO();
+                        newWrapper.state = "Plant " + playerEntity.getHolding().ItemObj.itemName;
+                        playerEntity.stamina -= 5;
+                        current_avatar.current_avatarEntity.animator.SetBool("isPlanting", false);
+                        playerEntity.backpack.modifyItem(playerEntity.getHolding(), 1);
+                        Network.sendPacket<AreaIndexDTO>(doCommands.index, "Plant", newWrapper);
+                    
+                }
+                else
+                {
+                    if (getSoil.plantSeed(currentGrid, playerVision.getGridIndex(), PlantFactory.retrievePlant(playerEntity.getHolding().ItemObj.itemName)))
+                    {
+                        getSoil.currentGridIndex = playerVision.getGridIndex();
+                        playerVision.getGridIndex().state = playerEntity.getHolding().ItemObj.itemName;
+                        playerEntity.stamina -= 5;
+                        playerEntity.backpack.modifyItem(playerEntity.getHolding(), 1);
+                    }
+                }
+            }
+        }
+        else if (parser[0].Equals("Removing"))
+        {
+            string temp_pickup = in_action.Replace(parser[0] + " ", "");
+            if (temp_pickup != null || !temp_pickup.Equals("Nothing"))
+            {
+
+                if (playerVision.getGridIndex().index.TryGetComponent<Soil>(out Soil out_soil))
+                {
+                    PlantFactory.removeCrop(out_soil.plant);
+
+
+                    currentGrid.removeObjectAtIndex(playerVision.getGridIndex());
+                    newWrapper = playerVision.getGridIndex().toDTO();
+                    newWrapper.areaObj = currentGrid.area.toDTO();
+                    newWrapper.state = "Harvest";
+                    current_avatar.current_avatarEntity.animator.SetBool("isPlanting", false);
+                    Network.sendPacket<AreaIndexDTO>(doCommands.index, "Harvest", newWrapper);
+                }
+            }
+        }
+        else if (parser[0].Equals("Harvesting"))
+        {
+            string temp_pickup = in_action.Replace(parser[0] + " ", "");
+            if (temp_pickup != null || !temp_pickup.Equals("Nothing"))
+            {
+                if (playerVision.getGridIndex().index.TryGetComponent<Soil>(out Soil out_soil))
+                {
+                    if (Network.isConnected)
+                    {
+                        DataCache.plantCache.TryGetValue(temp_pickup, out Plant out_plant);
+
+                        playerEntity.backpack.createItem(name, out_plant.plantName, Random.Range(2, 4));
+                        currentGrid.removeObjectAtIndex(playerVision.getGridIndex());
+                        newWrapper = playerVision.getGridIndex().toDTO();
+                        newWrapper.areaObj = currentGrid.area.toDTO();
+                        newWrapper.state = "Harvest";
+                        current_avatar.current_avatarEntity.animator.SetBool("isPlanting", false);
+                        Network.sendPacket<AreaIndexDTO>(doCommands.index, "Harvest", newWrapper);
+                    }
+                    else
+                    {
+                        if (playerEntity.backpack.createItem(name, temp_pickup, Random.Range(2, 4)))
+                        {
+                            //                        PlantFactory.removeCrop(out_soil.plant);
+                            Destroy(playerVision.getGridIndex().index);
+                            playerVision.getGridIndex().index = null;
+                            playerVision.getGridIndex().objectName = null;
+                            currentGrid.saveArea(Network.isConnected ? "Online" : "Offline");
+                        }
+                        else
+                        {
+                            toastNotifications.newNotification("Your bag is full");
+                        }
+                    }
+
+                }
+            }
+        }
+        else
+        {
+            switch (in_action)
+            {
+                case "Plowing Land":
+                        currentGrid.generateObject(playerVision.getGridIndex(), "Soil", true, true);
+                        newWrapper = playerVision.getGridIndex().toDTO();
+                        newWrapper.areaObj = currentGrid.area.toDTO();
+                        newWrapper.state = "Plow";
+                        current_avatar.current_avatarEntity.animator.SetBool("isPlowing", false);
+                        Network.sendPacket<AreaIndexDTO>(doCommands.index, "Plow", newWrapper);
+                        useHolding(2, 5);
+                    break;
+                case "Watering":
+                    if (playerVision.getGridIndex().index.TryGetComponent<Soil>(out Soil getSoil))
+                    {
+                        playerEntity.getHolding().ItemObj.capacity -= 1;
+                        newWrapper = playerVision.getGridIndex().toDTO();
+                        newWrapper.areaObj = currentGrid.area.toDTO();
+                        newWrapper.state = "Water";
+                        current_avatar.current_avatarEntity.animator.SetBool("isWatering", false);
+                        Network.sendPacket<AreaIndexDTO>(doCommands.index, "Water", newWrapper);
+                        useHolding(2, 5);
+                    }
+                    break;
+                case "Refilling":
+                    playerVision.selectInteractable.reaction(this);
+                    current_avatar.current_avatarEntity.animator.SetBool("isWatering", false);
+                    useHolding(1, 5);
+                    break;
+            }
+        }
+    }
     public void listen(string getAction)
     {
         string[] parsed = getAction.Split(' ');
@@ -1304,5 +1316,15 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
     {
         if (teleportPosition != Vector3.zero)
         transform.position = teleportPosition;
+    }
+
+    public void loadTutorial()
+    {
+        if (playerEntity.state.Equals("New"))
+        {
+            playerEntity.state = "Player";
+            newMessage("Jimmy", "Hi ho there! Welcome to the alpha version of this game, Move with WASD, and control your camera with the mouse (FPS logic much?). Anyways, M button will bring up your inventory and ESC will bring up setting menu. IT's not fully implemented but that's where you can go into the builder mode to build up your place.. it's clunky but i will finish it later. Lets go outside and proceed with the game.");
+            save();
+        }
     }
 }

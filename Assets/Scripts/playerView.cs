@@ -11,6 +11,8 @@ public class playerView : MonoBehaviour
 
     public bool groundSelectable;
 
+    public Vector3 fpsRotation;
+    public Vector3 tpsRotation;
     public IInteractable selectInteractable;
     [SerializeField] PlayerController playerController;
 
@@ -23,20 +25,21 @@ public class playerView : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out RaycastHit hitInteractable, 8f, whatIsInteractable))
+        if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out RaycastHit hitInteractable, 3.5f, whatIsInteractable))
         {
             if (hitInteractable.transform.TryGetComponent<IInteractable>(out IInteractable getInteractable))
             {
                 selectInteractable = getInteractable;
+                Debug.DrawLine(transform.position, hitInteractable.point, new Color(0, 1f, 0));
             }
         }
         else
         {
             if (selectInteractable != null) selectInteractable = null;
-            if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out RaycastHit hitLower, 8f, whatIsSelectable))
+            if (Physics.Raycast(transform.position, transform.TransformDirection(Vector3.forward), out RaycastHit hitLower, 3.5f, whatIsSelectable))
             {
                 focusPoint = hitLower.point;
-                Debug.DrawLine(transform.position, hitLower.point);
+                Debug.DrawLine(transform.position, hitLower.point, new Color(1f, 0, 0));
                 //selectgrid = getgrid.getindex(hitlower.point);
                 //if (groundselectable)
                 //{

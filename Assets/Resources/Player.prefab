@@ -126,8 +126,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   canvas: {fileID: 0}
-  group: {fileID: 0}
   playerEntity:
+    _id: 
     entityName: 
     position: {x: 0, y: 0, z: 0}
     rotation: {x: 0, y: 0, z: 0, w: 0}
@@ -138,6 +138,7 @@ MonoBehaviour:
     stamina: 0
     maxStamina: 0
     state: 
+    holding: 
     time: 0
     currentAnimal: 
     primary_currentRed: 0
@@ -344,6 +345,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 128
   groundSelection: {fileID: 0}
+  cameraMode: 
   focusPoint: {x: 0, y: 0, z: 0}
   groundSelectable: 0
   playerController: {fileID: 2181763483368440962}

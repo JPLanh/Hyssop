@@ -685,44 +685,6 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
 
     public void serverResponseListener()
     {
-        if (Network.worldListWrapper.Count > 0)
-        {
-            WorldListWrapper temp_wrapper = Network.worldListWrapper.Dequeue();
-
-            if (temp_wrapper.total == 0)
-            {
-                allWorld = new List<World>();
-            }
-            if (temp_wrapper.Action.Equals("Complete")) loadAllWorld();
-            else
-            {
-                foreach (WorldDTO it_world in temp_wrapper.worldList)
-                {
-                    allWorld.Add(it_world.getActual());
-                }
-            }
-        }
-
-
-        if (Network.listOfCharacters.Count > 0)
-        {
-            characterListWrapper temp_wrapper = Network.listOfCharacters.Dequeue();
-
-
-            if (temp_wrapper.total == 0)
-            {
-                allChars = new List<Entity>();
-            }
-            if (temp_wrapper.Action.Equals("Complete")) loadAllCharacter();
-            else
-            {
-                foreach (EntityDTO it_entity in temp_wrapper.characterList)
-                {
-                    allChars.Add(it_entity.getActual());
-                }
-            }
-        }
-
         if (Network.listOfCharacter.Count > 0)
         {
             List<EntityDTO> temp_wrapper = Network.listOfCharacter.Dequeue();

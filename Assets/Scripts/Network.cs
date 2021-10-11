@@ -29,7 +29,7 @@ public class Network : MonoBehaviour
     public static Queue<allGridIndexPlantWrapper> listAreaIndexPlantWrapper = new Queue<allGridIndexPlantWrapper>();
     public static Queue<WorldListWrapper> worldListWrapper = new Queue<WorldListWrapper>();
     public static Queue<ItemExistanceWrapper> listOfCharacersItem = new Queue<ItemExistanceWrapper>();
-    public static Queue<networkListReceiver<ItemExistanceDTOWrapper>> listOfStorageItem = new Queue<networkListReceiver<ItemExistanceDTOWrapper>>();
+//    public static Queue<networkListReceiver<ItemExistanceDTOWrapper>> listOfStorageItem = new Queue<networkListReceiver<ItemExistanceDTOWrapper>>();
     public static Queue<plantDatabaseWrapper> listOfPlantDatabase = new Queue<plantDatabaseWrapper>();
     public static Queue<itemDatabaseWrapper> listOfItemDatabase = new Queue<itemDatabaseWrapper>();
 
