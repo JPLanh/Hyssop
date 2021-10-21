@@ -10,6 +10,7 @@ area = mongoose.model('Area'),
 itemMarket = mongoose.model('ItemMarket'),
 itemDatabase = mongoose.model('ItemDatabase'),
 plantDatabase = mongoose.model('PlantDatabase'),
+characterAccount = mongoose.model('CharacterAccount'),
 areaIndex = mongoose.model('AreaIndex'),
 areaPlant = mongoose.model('AreaPlant'),
 storage = mongoose.model('Storage'),
@@ -23,11 +24,17 @@ currentTime = Date.now();
 exports.processPacket = async function(in_broadcast_socket, in_socket, in_param)
 {
 	switch(in_param["command"]){
-		case "Main Menu":
-			processMainMenu(in_socket, in_param);
-			break;
+		case "User":
+			processUser(in_socket, in_param);
+			break;	
+		case "Character":
+			processCharacter(in_socket, in_param);
+			break;	
 		case "Database":
 			processDatabase(in_socket, in_param);
+			break;
+		case "Update":
+			processUpdate(in_socket, in_param);
 			break;
 		case "Preload":
 			processPreload(in_socket, in_param);
@@ -76,21 +83,100 @@ async function sendPacket(in_socket, in_type, in_data)
 		resolve("Done");
 	})
 }
+async function processUser(in_socket, in_param)
+{
+	let newParam = {};
+    let param = JSON.parse(in_param["data"]);
+	switch(in_param["input"]){		
+		case "Create user":
+			user.findOne({"username": param["Username"]}).exec()
+			.then(async (found_characters) => {
+				if (found_characters != null){
+					payload["action"] = "Failed user creation";
+				} else {
+					console.log("User created");
+					new user({"username": param["Username"], "password": param["Password"]}).save();
+					payload["action"] = "Created User";
+				}
+					sendPacket(getSocket, "Acknowledge", payload);
+			});
+			break;
+	}
+}
 
-async function processMainMenu(in_socket, in_param){
-	switch(in_param["input"]){
-		case "Characters":
-			return await character.find({"account": in_param["username"]}).exec()	
+async function processCharacter(in_socket, in_param)
+{
+//	console.log(in_param);
+	let newParam = {};
+    let param = JSON.parse(in_param["data"]);
+	switch(in_param["input"]){		
+		case "All Characters":
+			return await characterAccount.find({"account": in_param["username"]}).exec()	
 			.then(async (found_characters) => {
 				sendPacket(in_socket, "Character list", found_characters);
 				//await dataController.sendListData(getSocket, 1, found_characters, "characterList", "Load characters", "Load all Characters", "All characters complete");	
 			})
 			break;
-		case "Worlds":
-			return await world.find({}).exec()
-			.then(async (found_worlds) => {
-				sendPacket(in_socket, "World list", found_worlds);
-//					await dataController.sendListData(getSocket, 10, getWorlds, "worldList", "Load worlds", "Load all World", "All world loaded complete");	
+		case "Create":					
+			let entityExistance = JSON.parse(param["Character"])
+			let charData = entityExistance["entityObj"];
+			//console.log(charData);
+			characterAccount.findOne({"entityObj.entityName": charData["entityName"]}).exec()
+			.then(async (find_character) => {
+				if (find_character != null){
+					payload["Action"] = "Duplicate character";
+					sendPacket(in_socket, "Acknowledge", payload);
+				} else {
+					return new Promise(async (resolve, reject) => {
+						resolve(await instantiator.createNewCharacter(charData, entityExistance["position"], entityExistance["rotation"], in_param["username"]));
+					})
+				}
+			})
+			.then(async () => {
+				return await characterAccount.find({"account": in_param["username"]}).exec()	
+			})
+			.then(async (found_characters) => {
+				sendPacket(in_socket, "Character list", found_characters);
+			})
+			break;
+		case "Delete":
+			await character.deleteOne({"account": param["Username"], "entityName": param["EntityName"]}).exec()
+			.then(async () => {
+				await area.deleteMany({"areaName": param["EntityName"] + "_farm"}).exec()
+			})
+			.then(async () => {
+				await areaIndex.deleteMany({"areaName": param["EntityName"] + "_farm"}).exec()
+			})
+			.then(async () => {
+				return await itemExistance.find({"binder.entityName": param["EntityName"]}).exec()
+			})
+			.then(async (itemList) => {
+				itemList.forEach(async (it_itemList) => {
+					item.findByIdAndRemove(it_itemList.itemObj._id).exec();
+				})
+			})
+			.then(async () => {
+				return await itemExistance.find({"binder.entityName": param["EntityName"] + "_farm"}).exec()
+			})
+			.then(async (itemList) => {
+				itemList.forEach(async (it_itemList) => {
+					item.findByIdAndRemove(it_itemList.itemObj._id).exec();
+				})
+			})
+			.then(async () => {
+				await itemExistance.deleteMany({"binder.entityName": param["EntityName"]}).exec()
+			})
+			.then(async () => {
+				await areaItem.deleteMany({"areaObj.areaName": param["EntityName"] + "_farm"}).exec()
+			})
+			.then(async () => {
+				await areaPlant.deleteMany({"index.areaName": param["EntityName"] + "_farm"}).exec()
+			})
+			.then(async () => {						
+				return await character.find({"account": param["Username"]}).exec()	
+			})
+			.then(async (found_characters) => {
+				sendPacket(getSocket, "Character list", found_characters);
 			})
 			break;
 	}
@@ -115,6 +201,16 @@ async function processDatabase(in_socket, in_param){
 	}
 }
 
+async function processUpdate(in_socket, in_param)
+{
+	let data = JSON.parse(in_param["data"]);
+	let get_entity = data["entityObj"];
+	let get_position = data["position"];
+	let get_rotation = data["rotation"];
+	entityExistance.findOneAndUpdate({"entityObj._id": mongoose.Types.ObjectId(get_entity["_id"])}, data, {upsert:true, new:true}).exec();
+	//mongoose.Types.ObjectId(param["storageID"])
+}
+
 async function processPreload(in_socket, in_param){
 	newParam = {};
 	switch(in_param["input"])
@@ -124,15 +220,16 @@ async function processPreload(in_socket, in_param){
 			.then(async (getFarm) => {
 				if (getFarm == null){
 					console.log("Farm generated");
-					world.findOne({"worldName": in_param["worldName"]}).exec()
+					return await world.findOne({"worldName": in_param["worldName"]}).exec()
 					.then(async (get_world) =>{
 						return await instantiator.generatePlayerFarm(in_socket, get_world, in_param["entity"]);
 					})
-				}
+				} else return getFarm;
 			})
-			.then(async () =>{
-				newParam["action"] = "Farm generated";
-				sendPacket(in_socket, "Acknowledge", newParam);
+			.then(async (getArea) =>{
+//				newParam["action"] = "Farm generated";
+//				newParam["data"] = getArea; 
+				sendPacket(in_socket, "Area", getArea);
 			})
 			break;		
 		case "Preload Area":
@@ -169,6 +266,7 @@ async function processPlayer(in_socket, in_param){
 
 async function processLoad(in_socket, in_param)
 {
+//	console.log(in_param);
 	switch(in_param["input"])
 	{
 		case "World":
@@ -302,15 +400,15 @@ async function processPlayerItem(in_socket, in_param)
 		                item_found.save();
 		            }
 		        } else {
-		            let getCharacter = character.findOne({"entityName": in_param["entity"]}).exec()
-		            let getItem = itemDatabase.findOne({"itemName": in_param["item"]}).exec()
+		            let getCharacter = characterAccount.findOne({"entityObj.entityName": in_param["entity"]}).exec()
+		            let getItem = serverController.itemsDB[in_param["item"]]//itemDatabase.findOne({"itemName": in_param["item"]}).exec()
 		            await Promise.all([getCharacter, getItem])
 		            .then(async (res) => {
 		                newParam["Action"] = "New item";
 		                return await new item({"itemName": res[1]["itemName"], "itemType": res[1]["itemType"], maxDurability: res[1]["maxDurability"], durability: res[1]["maxDurability"], capacity: 0, maxCapacity: res[1]["maxCapacity"], quantity: in_param["quantity"]}).save()
 		                .then(async (newItem) => {
 		                    newParam["Item"] = newItem;             
-		                    return await new itemExistance({"binder": res[0], "itemObj": newItem}).save()
+		                    return await new itemExistance({"binder": res[0]["entityObj"], "itemObj": newItem}).save()
 		                })
 		                .then(async (newItem) =>{
 							sendPacket(in_socket, "Item", newItem);
@@ -429,7 +527,13 @@ async function processWorld(in_broadcast_socket, in_socket, in_param)
     let param = JSON.parse(in_param["data"]);
 	switch(in_param["input"])
 	{
-		case "New world":
+		case "All worlds":
+			return await world.find({}).exec()
+			.then(async (found_worlds) => {
+				sendPacket(in_socket, "World list", found_worlds);
+//					await dataController.sendListData(getSocket, 10, getWorlds, "worldList", "Load worlds", "Load all World", "All world loaded complete");	
+			})
+		case "Create":
 			await new world(param).save()
 			.then(async (new_world) => {
 				return await instantiator.newWorld(in_socket, new_world);
@@ -474,7 +578,7 @@ async function processIndex(in_broadcast_socket, in_socket, in_param)
 		case "Plant":
 			let seed = param["state"].replace("Plant ", "");
 			let foundIndex = areaIndex.findOne({"areaObj.areaName": param["areaObj"]["areaName"], "areaObj.worldObj.worldName": in_param["worldName"], "x": param["x"], "y": param["y"], "z": param["z"]});
-			let foundPlant = plantDatabase.findOne({"seedName": seed});
+			let foundPlant = serverController.plantDB[seed]//plantDatabase.findOne({"seedName": seed});
 
 			Promise.all([foundIndex, foundPlant])
 			.then(async (res) => {
@@ -513,6 +617,7 @@ async function processIndex(in_broadcast_socket, in_socket, in_param)
 async function processEntity(in_socket, in_param)
 {
 	let param = JSON.parse(in_param["data"]);
+	let get_entity = param["entityObj"];
 	switch(in_param["input"])
 	{
 		case "Player":
@@ -527,20 +632,7 @@ async function processEntity(in_socket, in_param)
 				in_socket.join(param["areaName"]);
 
 			}
-
-
-			character.findOne({"entityName": param["entityName"]}).exec()
-			.then(async (foundEntity) => {
-				foundEntity["position"] = param["position"];
-				foundEntity["rotation"] = param["rotation"];
-				foundEntity["areaName"] = param["areaName"];
-				foundEntity["stamina"] = param["stamina"];
-				foundEntity["maxStamina"] = param["maxStamina"];
-				foundEntity["state"] = param["state"];
-				foundEntity["holding"] = param["holding"];
-				foundEntity["backpack"] = param["backpack"];
-				foundEntity.save();
-			})
+			characterAccount.findOneAndUpdate({"entityObj._id": mongoose.Types.ObjectId(get_entity["_id"])}, param).exec()
 			break;
 	}	
 }

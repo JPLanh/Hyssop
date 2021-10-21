@@ -33,6 +33,7 @@ module.exports = async function(socket){
 		await getSocket.on('Login', async (getPayload) => {
 			let param = JSON.parse(getPayload);
 			let payload = {};
+			console.log(param);
 
 			switch(param["Action"]){
 				case "Login":
@@ -55,84 +56,82 @@ module.exports = async function(socket){
 							payload["action"] = "Denied";
 						}
 							sendPacket(getSocket, "Acknowledge", payload);
-
-	//					getSocket.emit("Action", JSON.stringify(newParam).replace(/"/g, "`"));
 					})
 					break;
-				case "Create user":
-					user.findOne({"username": param["Username"]}).exec()
-					.then(async (found_characters) => {
-						if (found_characters != null){
-							payload["action"] = "Failed user creation";
-						} else {
-							console.log("User created");
-							new user({"username": param["Username"], "password": param["Password"]}).save();
-							payload["action"] = "Created User";
-						}
-							sendPacket(getSocket, "Acknowledge", payload);
-					});
-					break;
-				case "Create character":					
-					let parsedJson = JSON.parse(param["Character"]);
-					parsedJson["account"] =  param["Username"];
-					character.findOne({"entityName": parsedJson["entityName"]}).exec()
-					.then(async (find_character) => {
-						if (find_character != null){
-							payload["Action"] = "Duplicate character";
-							sendPacket(getSocket, "Acknowledge", payload);
-						} else {
-							return new Promise(async (resolve, reject) => {
-								resolve(await instantiator.createNewCharacter(parsedJson));
-							})
-						}
-					})
-					.then(async () => {
-						return await character.find({"account": param["Username"]}).exec()	
-					})
-					.then(async (found_characters) => {
-						sendPacket(getSocket, "Character list", found_characters);
-					})
-					break;
-				case "Delete":
-				await character.deleteOne({"account": param["Username"], "entityName": param["EntityName"]}).exec()
-				.then(async () => {
-					await area.deleteMany({"areaName": param["EntityName"] + "_farm"}).exec()
-				})
-				.then(async () => {
-					await areaIndex.deleteMany({"areaName": param["EntityName"] + "_farm"}).exec()
-				})
-				.then(async () => {
-					return await itemExistance.find({"binder.entityName": param["EntityName"]}).exec()
-				})
-				.then(async (itemList) => {
-					itemList.forEach(async (it_itemList) => {
-						item.findByIdAndRemove(it_itemList.itemObj._id).exec();
-					})
-				})
-				.then(async () => {
-					return await itemExistance.find({"binder.entityName": param["EntityName"] + "_farm"}).exec()
-				})
-				.then(async (itemList) => {
-					itemList.forEach(async (it_itemList) => {
-						item.findByIdAndRemove(it_itemList.itemObj._id).exec();
-					})
-				})
-				.then(async () => {
-					await itemExistance.deleteMany({"binder.entityName": param["EntityName"]}).exec()
-				})
-				.then(async () => {
-					await areaItem.deleteMany({"areaObj.areaName": param["EntityName"] + "_farm"}).exec()
-				})
-				.then(async () => {
-					await areaPlant.deleteMany({"index.areaName": param["EntityName"] + "_farm"}).exec()
-				})
-				.then(async () => {						
-					return await character.find({"account": param["Username"]}).exec()	
-				})
-				.then(async (found_characters) => {
-					sendPacket(getSocket, "Character list", found_characters);
-				})
-				break;
+				// case "Create user":
+				// 	user.findOne({"username": param["Username"]}).exec()
+				// 	.then(async (found_characters) => {
+				// 		if (found_characters != null){
+				// 			payload["action"] = "Failed user creation";
+				// 		} else {
+				// 			console.log("User created");
+				// 			new user({"username": param["Username"], "password": param["Password"]}).save();
+				// 			payload["action"] = "Created User";
+				// 		}
+				// 			sendPacket(getSocket, "Acknowledge", payload);
+				// 	});
+				// 	break;
+				// case "Create character":					
+				// 	let parsedJson = JSON.parse(param["Character"]);
+				// 	parsedJson["account"] =  param["Username"];
+				// 	characterAccount.findOne({"entityObj.entityName": parsedJson["entityName"]}).exec()
+				// 	.then(async (find_character) => {
+				// 		if (find_character != null){
+				// 			payload["Action"] = "Duplicate character";
+				// 			sendPacket(getSocket, "Acknowledge", payload);
+				// 		} else {
+				// 			return new Promise(async (resolve, reject) => {
+				// 				resolve(await instantiator.createNewCharacter(parsedJson, param["Username"]));
+				// 			})
+				// 		}
+				// 	})
+				// 	.then(async () => {
+				// 		return await character.find({"account": param["Username"]}).exec()	
+				// 	})
+				// 	.then(async (found_characters) => {
+				// 		sendPacket(getSocket, "Character list", found_characters);
+				// 	})
+				// 	break;
+				// case "Delete":
+				// await character.deleteOne({"account": param["Username"], "entityName": param["EntityName"]}).exec()
+				// .then(async () => {
+				// 	await area.deleteMany({"areaName": param["EntityName"] + "_farm"}).exec()
+				// })
+				// .then(async () => {
+				// 	await areaIndex.deleteMany({"areaName": param["EntityName"] + "_farm"}).exec()
+				// })
+				// .then(async () => {
+				// 	return await itemExistance.find({"binder.entityName": param["EntityName"]}).exec()
+				// })
+				// .then(async (itemList) => {
+				// 	itemList.forEach(async (it_itemList) => {
+				// 		item.findByIdAndRemove(it_itemList.itemObj._id).exec();
+				// 	})
+				// })
+				// .then(async () => {
+				// 	return await itemExistance.find({"binder.entityName": param["EntityName"] + "_farm"}).exec()
+				// })
+				// .then(async (itemList) => {
+				// 	itemList.forEach(async (it_itemList) => {
+				// 		item.findByIdAndRemove(it_itemList.itemObj._id).exec();
+				// 	})
+				// })
+				// .then(async () => {
+				// 	await itemExistance.deleteMany({"binder.entityName": param["EntityName"]}).exec()
+				// })
+				// .then(async () => {
+				// 	await areaItem.deleteMany({"areaObj.areaName": param["EntityName"] + "_farm"}).exec()
+				// })
+				// .then(async () => {
+				// 	await areaPlant.deleteMany({"index.areaName": param["EntityName"] + "_farm"}).exec()
+				// })
+				// .then(async () => {						
+				// 	return await character.find({"account": param["Username"]}).exec()	
+				// })
+				// .then(async (found_characters) => {
+				// 	sendPacket(getSocket, "Character list", found_characters);
+				// })
+				// break;
 			}	
 		})
 

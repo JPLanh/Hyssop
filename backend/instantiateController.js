@@ -18,6 +18,7 @@ const models = require('../Model/gameModel'),
 	cart = mongoose.model('Cart'),
     entity = mongoose.model("Entity"),
     entityExistance = mongoose.model("EntityExistance"),
+    characterAccount = mongoose.model("CharacterAccount"),
 	character = mongoose.model('Character'),
     world = mongoose.model('World'),
 	currentTime = Date.now();
@@ -41,10 +42,10 @@ exports.createNewAreaItem = async function(in_socket, in_entityName, in_itemName
 	})
 }
 
-exports.createNewNPC = async function(in_param, in_area){
+exports.createNewNPC = async function(in_param, in_area, in_pos){
     return await new entity(in_param).save()
     .then(async (new_entity) => {
-        return await new entityExistance({"entityObj": new_entity, "areaObj": in_area}).save();
+        return await new entityExistance({"entityObj": new_entity, "position": in_pos["position"], "rotation": in_pos["rotation"], "areaObj": in_area}).save();
     })
 }
 
@@ -72,9 +73,11 @@ exports.storage_getItem = async function(in_storageName, in_itemName, in_quantit
     })
 }
 
-exports.createNewCharacter = async function(in_character)
+exports.createNewCharacter = async function(in_character, in_position, in_rotation, in_account)
 {
-	return await new character(in_character).save()
+    in_character["_id"] = mongoose.Types.ObjectId();
+    let new_entity = await new entity(in_character);
+	return await new characterAccount({"entityObj": new_entity, "position": in_position, "rotation": in_rotation, "account": in_account}).save()
 }
 
 exports.createNewGrid = async function(in_length, in_width, in_height, in_name, in_buildable, in_world){
@@ -181,12 +184,13 @@ async function generateFarmHouse(in_area, x_start, y_start, z_start, x_size, y_s
 exports.generateCentralHubNPC = async function(in_area)
 {
     trevik = {};
+    pos = {};
     trevik['entityName'] = "Trevik";
     trevik["stamina"] = 100;
     trevik["maxStamina"] = 100;
     trevik["state"] = "";
-    trevik["position"] = new position({"x": 5, "y": 0, "z": 13});
-    trevik["rotation"] = new rotation({"x": 0, "y": 0, "z": 0, "w": 0});
+    pos["position"] = new position({"x": 5, "y": 0, "z": 13});
+    pos["rotation"] = new rotation({"x": 0, "y": 0, "z": 0, "w": 0});
     trevik["currentAnimal"] = "Fox";
     trevik["primary_currentBlue"] = 32;
     trevik["primary_currentRed"] = 84;
@@ -194,7 +198,7 @@ exports.generateCentralHubNPC = async function(in_area)
     trevik["secondary_currentBlue"] = 52;
     trevik["secondary_currentRed"] = 125;
     trevik["secondary_currentGreen"] = 25;
-    return await instantiator.createNewNPC(trevik, in_area)
+    return await instantiator.createNewNPC(trevik, in_area, pos)
     .then(async () => {
         trevik = {};
         await instantiator.npc_getItem("Trevik", "Strawberry seed", 25, 10, 10, 30, 250);
@@ -213,12 +217,13 @@ exports.generateCentralHubNPC = async function(in_area)
     })
     .then(async () => {
         Izak = {};
+        pos = {};
         Izak['entityName'] = "Izak";
         Izak["stamina"] = 100;
         Izak["maxStamina"] = 100;
         Izak["state"] = "";
-        Izak["position"] = new position({"x": 42, "y": 0, "z": 17});
-        Izak["rotation"] = new rotation({"x": 0, "y": 0, "z": 0, "w": 0});
+        pos["position"] = new position({"x": 42, "y": 0, "z": 17});
+        pos["rotation"] = new rotation({"x": 90, "y": 0, "z": 0, "w": 0});
         Izak["currentAnimal"] = "Cat";
         Izak["primary_currentBlue"] = 122;
         Izak["primary_currentRed"] = 122;
@@ -226,7 +231,7 @@ exports.generateCentralHubNPC = async function(in_area)
         Izak["secondary_currentBlue"] = 0;
         Izak["secondary_currentRed"] = 75;
         Izak["secondary_currentGreen"] = 90;
-        return await instantiator.createNewNPC(Izak, in_area)
+        return await instantiator.createNewNPC(Izak, in_area, pos)
     })
 }
 
@@ -437,7 +442,15 @@ exports.generatePlayerFarm = async function(in_socket, in_world, in_name){
         return await generateFarmItems(in_socket, in_name, getArea);
     })
     .then(async (getArea) => {
-        areaItem.findOneAndUpdate({"itemObj.itemName": "Basic Well", "itemObj.binder": in_name + "_farm"}, {"itemObj.capacity": 50, "itemObj.maxCapacity": 100}, {upsert:true}).exec()
+        await characterAccount.findOneAndUpdate({"entityObj.entityName": in_name}, {"areaObj": getArea}).exec()
+        .then(async (get_character) => {        
+            let newParam = {};
+            newParam["type"] = "Character";
+            newParam["data"] = JSON.stringify(get_character).replace(/"/g, "`");
+            in_socket.emit("Get Data", newParam);
+        })
+        await areaItem.findOneAndUpdate({"itemObj.itemName": "Basic Well", "itemObj.binder": in_name + "_farm"}, {"itemObj.capacity": 50, "itemObj.maxCapacity": 100}, {upsert:true}).exec();
+        return getArea;
     })
 }
 
@@ -459,7 +472,7 @@ exports.entity_getItem = async function(in_socket, in_entityName, in_itemName, i
                 item_found.save();
             }
         } else {
-            let getCharacter = character.findOne({"entityName": in_entityName}).exec()
+            let getCharacter = characterAccount.findOne({"entityName": in_entityName}).exec()
             let getItem = itemDatabase.findOne({"itemName": in_itemName}).exec()
             await Promise.all([getCharacter, getItem])
             .then(async (res) => {

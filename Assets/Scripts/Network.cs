@@ -18,7 +18,7 @@ public class Network : MonoBehaviour
     public static String UserID { get; set; }
     public static bool local { get; set; }
     public static bool isConnected { get; set; }
-    public static Entity loadedCharacter { get; set; }
+    public static EntityExistanceDTO<EntityDTO> loadedCharacter { get; set; }
     public static World loadedWorld { get; set; }
     public static Queue<characterListWrapper> characterNetworkUpdate = new Queue<characterListWrapper>();
 
@@ -48,19 +48,20 @@ public class Network : MonoBehaviour
     public static Queue<WorldDTO> worldRetrieved = new Queue<WorldDTO>();
 
     public static Queue<characterListWrapper> listOfCharacters = new Queue<characterListWrapper>();
-    public static Queue<List<EntityDTO>> listOfCharacter = new Queue<List<EntityDTO>>();
+    public static Queue<List<EntityExistanceDTO<EntityDTO>>> listOfCharacter = new Queue<List<EntityExistanceDTO<EntityDTO>>>();
+    public static Queue<EntityExistanceDTO<EntityDTO>> characterQueue = new Queue<EntityExistanceDTO<EntityDTO>>();
     public static Queue<List<WorldDTO>> listOfWorlds = new Queue<List<WorldDTO>>();
     public static Queue<List<ItemExistanceDTOWrapper>> listOfItems = new Queue<List<ItemExistanceDTOWrapper>>();
     public static Queue<Dictionary<string, string>> serverAcknowledge = new Queue<Dictionary<string, string>>();
     public static Queue<AreaDTO> areaConfig = new Queue<AreaDTO>();
     public static Queue<List<AreaIndexDTO>> listOfAreaIndexes = new Queue<List<AreaIndexDTO>>();
     public static Queue<List<AreaItemDTO>> listOfAreaItems = new Queue<List<AreaItemDTO>>();
-    public static Queue<List<EntityExistanceDTO>> listOfAreaNPCs = new Queue<List<EntityExistanceDTO>>();
+    public static Queue<List<EntityExistanceDTO<EntityDTO>>> listOfAreaNPCs = new Queue<List<EntityExistanceDTO<EntityDTO>>>();
     public static Queue<List<AreaPlantDTO>> listOfAreaPlants = new Queue<List<AreaPlantDTO>>();
     public static Queue<AreaPlantDTO> areaPlants = new Queue<AreaPlantDTO>();
     public static Queue<ItemExistanceDTOWrapper> itemRetrieved = new Queue<ItemExistanceDTOWrapper>();
 
-    public static bool debug = false;
+    public static bool debug = true;
 
     // Start is called before the first frame update
     void Start()
@@ -162,12 +163,22 @@ public class Network : MonoBehaviour
         payload["username"] = Username;
         if (loadedCharacter != null)
         {
-            payload["entity"] = loadedCharacter.entityName;
+            payload["entity"] = loadedCharacter.entityObj.entityName;
         }
         if (loadedWorld != null)
         {
             payload["worldName"] = Network.loadedWorld.worldName;
         }
+        payload["data"] = JsonConvert.SerializeObject(in_data, settings);
+
+        socket.Emit("Packet", JsonConvert.SerializeObject(payload));
+    }
+
+    public static void doUpdate(EntityExistanceDTO<Entity> in_data)
+    {
+
+        Dictionary<string, string> payload = new Dictionary<string, string>();
+        payload["command"] = "Update";
         payload["data"] = JsonConvert.SerializeObject(in_data, settings);
 
         socket.Emit("Packet", JsonConvert.SerializeObject(payload));
@@ -199,7 +210,7 @@ public class Network : MonoBehaviour
         payload["input"] = in_action;
         payload["item"] = in_item;
         payload["quantity"] = in_amount.ToString();
-        payload["entity"] = loadedCharacter.entityName;
+        payload["entity"] = loadedCharacter.entityObj.entityName;
         if (loadedWorld != null)
         {
             payload["worldName"] = Network.loadedWorld.worldName;
@@ -214,7 +225,7 @@ public class Network : MonoBehaviour
         payload["username"] = Username;
         if (loadedCharacter != null)
         {
-            payload["entity"] = loadedCharacter.entityName;
+            payload["entity"] = loadedCharacter.entityObj.entityName;
         }
         if (loadedWorld != null)
         {
@@ -228,12 +239,14 @@ public class Network : MonoBehaviour
     public static void sendPacket(string in_command, string in_action)
     {
         Dictionary<string, string> payload = new Dictionary<string, string>();
+        Dictionary<string, string> data = new Dictionary<string, string>();
         payload["command"] = in_command;
         payload["input"] = in_action;
         payload["username"] = Username;
+        payload["data"] = JsonConvert.SerializeObject(data);
         if (loadedCharacter != null)
         {
-            payload["entity"] = loadedCharacter.entityName;
+            payload["entity"] = loadedCharacter.entityObj.entityName;
         }
         if (loadedWorld != null)
         {
@@ -250,7 +263,7 @@ public class Network : MonoBehaviour
         payload["username"] = Username;
         if (loadedCharacter != null)
         {
-            payload["entity"] = loadedCharacter.entityName;
+            payload["entity"] = loadedCharacter.entityObj.entityName;
         }
         if (loadedWorld != null)
         {
@@ -295,16 +308,23 @@ class emitQueue
     }
 }
 
-[Serializable]
-public class networkListReceiver<T>
+public static class doCommands
 {
-    public List<T> objectList;
-    public string Action;
-    public string type;
-    public int index;
-    public int total;
+    public static String user { get { return "User"; } }
+    public static String character { get { return "Character"; } }
+    public static String player { get { return "Player"; } }
+    public static String database { get { return "Database"; } }
+    public static String preload { get { return "Preload"; } }
+    public static String load { get { return "Load"; } }
+    public static String action { get { return "Action"; } }
+    public static String item { get { return "Item"; } }
+    public static String playerItem { get { return "Player Item"; } }
+    public static String entityItem { get { return "Entity Item"; } }
+    public static String area { get { return "Area"; } }
+    public static string storage { get { return "Storage"; } }
+    public static string world { get { return "World"; } }
+    public static string index { get { return "Index"; } }
 }
-
 /**
  *  Process the data that were retrieved from the server, and enqueue them to the appropriate queue.
  * 
@@ -332,7 +352,10 @@ public class packetData
                     processPacketHelper<Dictionary<string, string>>(Network.serverAcknowledge);
                     break;
                 case "Character list":
-                    processPacketHelper<List<EntityDTO>>(Network.listOfCharacter);
+                    processPacketHelper<List<EntityExistanceDTO<EntityDTO>>>(Network.listOfCharacter);
+                    break;
+                case "Character":
+                    processPacketHelper<EntityExistanceDTO<EntityDTO>>(Network.characterQueue);
                     break;
                 case "World list":
                     processPacketHelper<List<WorldDTO>>(Network.listOfWorlds);
@@ -366,7 +389,7 @@ public class packetData
                     processPacketHelper<AreaPlantDTO>(Network.areaPlants);
                     break;
                 case "Area NPCs":
-                    processPacketHelper<List<EntityExistanceDTO>>(Network.listOfAreaNPCs);
+                    processPacketHelper<List<EntityExistanceDTO<EntityDTO>>>(Network.listOfAreaNPCs);
                     break;
                 case "Item":
                     processPacketHelper<ItemExistanceDTOWrapper>(Network.itemRetrieved);
@@ -388,20 +411,3 @@ public class packetData
     }
 }
 
-
-public static class doCommands
-{
-    public static String mainMenu { get { return "Main Menu"; } }
-    public static String player { get { return "Player"; } }
-    public static String database { get { return "Database"; } }
-    public static String preload { get { return "Preload"; } }
-    public static String load { get { return "Load"; } }
-    public static String action { get { return "Action"; } }
-    public static String item { get { return "Item"; } }
-    public static String playerItem { get { return "Player Item"; } }
-    public static String entityItem { get { return "Entity Item"; } }
-    public static String area { get { return "Area"; } }
-    public static string storage { get { return "Storage"; } }
-    public static string world { get { return "World"; } }
-    public static string index { get { return "Index"; } }
-}

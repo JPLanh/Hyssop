@@ -6,6 +6,7 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
 {
     public CanvasHelper canvas;
     public Entity playerEntity;
+    public EntityExistanceDTO<Entity> entityUpdater;
     public PlayerMenu mainMenu;
     public Transform itemDrag;
     public GridSystem currentGrid;
@@ -62,7 +63,7 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
 
         if (Network.isConnected)
         {
-            playerEntity = Network.loadedCharacter;
+            playerEntity = Network.loadedCharacter.entityObj.getActual();
         }
         else
         {
@@ -87,7 +88,7 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
     {
         if (Network.isConnected)
         {
-            save();
+            saveAndDC();
             Network.socket.Disconnect();
 
         }
@@ -103,11 +104,13 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
     {
         name = in_entity.entityName;
         characterController.enabled = false;
-        transform.position = in_entity.position;
+        transform.position = Network.loadedCharacter.position;
         characterController.enabled = true;
-        transform.rotation = in_entity.rotation;
+        //        transform.rotation = Network.loadedCharacter.rotation;
+        playerVision.fpsRotation = Network.loadedCharacter.rotation;
         playerEntity = in_entity;
-        currentGrid.area.areaName = in_entity.areaName;
+        print("Rotation: " + Network.loadedCharacter.rotation);
+        currentGrid.area.areaName = Network.loadedCharacter.areaObj.areaName;
 
 
         current_avatar = new avatarProperties(in_entity.currentAnimal);
@@ -121,6 +124,12 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
         current_avatar.currentAvatar.transform.SetParent(transform);
         current_avatar.currentAvatar.transform.localPosition = new Vector3(-0f, -0f, -0f);
         current_avatar.currentAvatar.transform.localRotation = Quaternion.Euler(0f, -90f, 0f);
+
+        entityUpdater._id = Network.loadedCharacter._id;
+        entityUpdater.entityObj = playerEntity;
+        entityUpdater.areaObj = currentGrid.area;
+        
+
         if (current_avatar.currentAvatar.TryGetComponent<AvatarEntity>(out AvatarEntity out_avatarEntity))
         {
             current_avatar.current_avatarEntity = out_avatarEntity;
@@ -141,11 +150,9 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
             playerEntity.backpack.createItem(name, "Coffee bean", 10);
             playerEntity.backpack.createItem(name, "Silver", 100);
             holdingText.text = "Nothing";
-            save();
         }
         else
         {
-            currentGrid.area.areaName = in_entity.areaName;
             if (playerEntity.holding == null || holding.itemName == null)
             {
                 holdingText.text = "Nothing";
@@ -185,10 +192,11 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
         playerVision.transform.localPosition = new Vector3(0f, 0f, -2f);
         playerVision.cameraMode = "Third Person";
     }
-    public void save()
+    public void saveAndDC()
     {
+
         playerEntity.position = CustomUtilities.vector3Rounder(transform.position);
-        playerEntity.rotation = CustomUtilities.vector3Rounder(transform.rotation);
+        playerEntity.rotation = CustomUtilities.vector3Rounder(playerVision.fpsRotation);
         //            playerEntity.rotation = Quaternion.identity;
         playerEntity.areaName = currentGrid.area.areaName;
         if (!Network.isConnected)
@@ -197,7 +205,22 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
         }
         else
         {
-            Network.doSaveImmediate<Entity>("Entity", playerEntity);
+            Network.doSaveImmediate("Entity", entityUpdater);
+        }
+    }
+    public void save()
+    {
+        playerEntity.position = CustomUtilities.vector3Rounder(transform.position);
+        playerEntity.rotation = CustomUtilities.vector3Rounder(playerVision.fpsRotation);
+        //            playerEntity.rotation = Quaternion.identity;
+        playerEntity.areaName = currentGrid.area.areaName;
+        if (!Network.isConnected)
+        {
+            DataUtility.saveEntityPlayer(playerEntity);
+        }
+        else
+        {
+            Network.doSaveImmediate("Entity", entityUpdater);
         }
     }
 
@@ -255,13 +278,13 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
         if (updateBroadcastTimer < 0)
         {
 
-            if (transform.position != playerEntity.position ||
-                transform.rotation != playerEntity.rotation)
+            if (transform.position != entityUpdater.position ||
+                playerVision.fpsRotation != entityUpdater.rotation)
             {
-                playerEntity.position = transform.position;
-                playerEntity.rotation = transform.rotation;
+                entityUpdater.position = transform.position;
+                entityUpdater.rotation = playerVision.fpsRotation;
                 updateBroadcastTimer = updateBroadcastInterval;
-                Network.doSaveImmediate<Entity>("Entity", playerEntity);
+                Network.doUpdate(entityUpdater);
 
             }
         }
@@ -383,7 +406,7 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
             }
         }
 
-        if (Input.GetAxis("Mouse ScrollWheel") < 0f && canRotate)
+        if (Input.GetAxis("Mouse ScrollWheel") < 0f)
         {
             if (!playerVision.cameraMode.Equals("Third Person"))
             {
@@ -1277,7 +1300,6 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
 
     public void dayFinished()
     {
-        save();
     }
 
     public void dayBegin()

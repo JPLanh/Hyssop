@@ -87,9 +87,9 @@ public class InGameListener : MonoBehaviour, IServerListener
         {
             currentPlayer.isLoading(true, "Loading everywuns", 0);
 
-            List<EntityExistanceDTO> get_list = Network.listOfAreaNPCs.Dequeue();
+            List<EntityExistanceDTO<EntityDTO>> get_list = Network.listOfAreaNPCs.Dequeue();
             int count = 0;
-            foreach (EntityExistanceDTO it_areaNpc in get_list)
+            foreach (EntityExistanceDTO<EntityDTO> it_areaNpc in get_list)
             {
                 currentPlayer.isLoading(true, "Loading everywun", (((float)count) / ((float)get_list.Count) * 100));
                 currentGrid.loadAreaNPC(it_areaNpc);
@@ -115,7 +115,7 @@ public class InGameListener : MonoBehaviour, IServerListener
             switch (getResponse["action"])
             {
                 case "Farm generated":
-                    payload["entity"] = Network.loadedCharacter.entityName;
+                    payload["entity"] = Network.loadedCharacter.entityObj.entityName;
                     Network.sendPacket(doCommands.player, "Items", payload);
                     break;
                 case "Old day end":
@@ -142,7 +142,7 @@ public class InGameListener : MonoBehaviour, IServerListener
             {
                 foreach (EntityDTO it_entity in characterWrapper.characterList)
                 {
-                    if (!it_entity.entityName.Equals(Network.loadedCharacter.entityName))
+                    if (!it_entity.entityName.Equals(Network.loadedCharacter.entityObj.entityName))
                     {
                         if (it_entity.areaName.Equals(currentGrid.area.areaName))
                         {
@@ -150,15 +150,15 @@ public class InGameListener : MonoBehaviour, IServerListener
                             if (InGameListener.characterTracker.TryGetValue(it_entity.entityName, out NonPlayerController out_npc))
                             {
                                 {
-                                    out_npc.playerEntity = it_entity.getActual();
+//                                    out_npc.playerEntity = it_entity.getActual();
                                 }
                             }
                             else
                             {
-                                GameObject temp_object = Instantiate(Resources.Load<GameObject>("NPC"), it_entity.position, it_entity.rotation);
+                                GameObject temp_object = Instantiate(Resources.Load<GameObject>("NPC"), it_entity.position, Quaternion.identity);
                                 if (temp_object.TryGetComponent<NonPlayerController>(out NonPlayerController out_NPC))
                                 {
-                                    out_NPC.playerEntity = it_entity.getActual();
+//                                    out_NPC.playerEntity = it_entity.getActual();
                                     out_NPC.currentObject = temp_object;
                                     InGameListener.characterTracker.Add(it_entity.entityName, out_NPC);
                                 }

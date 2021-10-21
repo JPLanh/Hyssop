@@ -4,6 +4,7 @@ const models = require('../Model/gameModel'),
 	character = mongoose.model('Character'),
 	areaItem = mongoose.model('AreaItem'),
 	plantDatabase = mongoose.model('PlantDatabase'),
+	itemDatabase = mongoose.model('ItemDatabase'),
 	itemExistance = mongoose.model('ItemExistance'),
 	instantiator = require('../Controller/instantiateController'),
 	areaPlant = mongoose.model('AreaPlant'),
@@ -12,11 +13,14 @@ const models = require('../Model/gameModel'),
 worlds = []
 refills = []
 storages = {}
+itemDB = {}
+plantDB = {}
 
 exports.worlds = worlds;
 exports.refills = refills;
 exports.storages = storages;
-
+exports.itemsDB = itemDB;
+exports.plantDB = plantDB;
 
 
 setInterval(function(){
@@ -53,6 +57,21 @@ exports.init = async function(){
 			worlds.push(it_world);
 		})
 	})
+	await itemDatabase.find({}).exec()
+	.then(async (found_item) => {
+		found_item.forEach(async (it_item) => {
+			itemDB[it_item["itemName"]] = it_item;
+		})
+	})
+	await plantDatabase.find({}).exec()
+	.then(async (found_plant) => {
+		found_plant.forEach(async (it_plant) => {
+			plantDB[it_plant["seedName"]] = it_plant;
+		})
+	})
+
+//	console.log(itemDB);
+//	console.log(plantDB);
 }
 
 async function dayEnd(it_world){

@@ -45,9 +45,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   npc:
+    _id: 
     entityName: 
     position: {x: 0, y: 0, z: 0}
-    rotation: {x: 0, y: 0, z: 0, w: 0}
+    rotation: {x: 0, y: 0, z: 0}
     areaName: 
     backpack:
       size: 0
@@ -55,6 +56,7 @@ MonoBehaviour:
     stamina: 0
     maxStamina: 0
     state: 
+    holding: 
     time: 0
     currentAnimal: 
     primary_currentRed: 0

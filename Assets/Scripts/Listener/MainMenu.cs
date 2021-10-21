@@ -17,7 +17,7 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
     private string focusButton;
     public avatarProperties current_avatar;
 
-    public List<Entity> allChars;
+    public List<EntityExistanceDTO<EntityDTO>> allChars;
     public List<World> allWorld;
 
     void OnApplicationQuit()
@@ -48,7 +48,7 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
     }
     private void login()
     {
-
+        Dictionary<string, string> payload = new Dictionary<string, string>();
         listOfInputFields.TryGetValue("Username", out inputField out_username);
         listOfInputFields.TryGetValue("Password", out inputField out_password);
         if (string.IsNullOrEmpty(out_username.inputValue.text) || string.IsNullOrEmpty(out_username.inputValue.text))
@@ -58,6 +58,8 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
         else
         {
             var newEncrypt = SimpleAESEncryption.Encrypt(out_username.inputValue.text, "obIt6RrZTP+omkHxuXgadQ==", out_password.inputValue.text);
+            payload["Username"] = out_username.inputValue.text;
+            payload["Password"] = newEncrypt.EncryptedText;
             Network.joinGame(out_username.inputValue.text, newEncrypt.EncryptedText, "Login", out_password.inputValue.text);
         }
     }
@@ -91,9 +93,6 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
 
     }
 
-    private void loadOnlineList()
-    {
-    }
     private void loadOffline()
     {
         clearObjectList();
@@ -115,6 +114,7 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
     private void createNewCharacter(string in_mode)
     {
         Entity playerEntity = new Entity();
+        EntityExistanceDTO<Entity> temp_entity = new EntityExistanceDTO<Entity>();
         listOfInputFields.TryGetValue("Character name", out inputField out_name);
         playerEntity.entityName = out_name.inputValue.text;
         playerEntity.backpack.size = 8;
@@ -124,8 +124,9 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
         playerEntity.stamina = 100;
         playerEntity.maxStamina = 100;
 
-        playerEntity.position = new Vector3(19f, 0f, 8f); ;
-        playerEntity.rotation = Quaternion.Euler(0f, 0f, 0f);
+        playerEntity.position = new Vector3(19f, 0f, 8f);
+        playerEntity.rotation = new Vector3(0f, 0f, 0f);
+//        playerEntity.rotation = Quaternion.Euler(0f, 0f, 0f);
         playerEntity.backpack = new Backpack();
         playerEntity.holding = null;
 
@@ -136,6 +137,11 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
         playerEntity.secondary_currentRed = current_avatar.secondary_currentRed;
         playerEntity.secondary_currentGreen = current_avatar.secondary_currentGreen;
         playerEntity.secondary_currentBlue = current_avatar.secondary_currentBlue;
+
+        temp_entity.entityObj = playerEntity;
+        temp_entity.position = new Vector3(19f, 0f, 8f);
+        temp_entity.rotation = new Vector3(0f, 0f, 0f);
+//        temp_entity.rotation = Quaternion.Euler(0f, 0f, 0f);
 
         if (in_mode.Equals("Offline"))
         {
@@ -150,8 +156,10 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
             Dictionary<string, string> payload = new Dictionary<string, string>();
             payload.Add("Action", "Create character");
             payload.Add("Username", Network.Username);
-            payload.Add("Character", JsonConvert.SerializeObject(playerEntity, settings));
-            Network.doLogin(payload);
+            payload.Add("Character", JsonConvert.SerializeObject(temp_entity, settings));
+
+            Network.sendPacket(doCommands.character, "Create", payload);
+            //            Network.doLogin(payload);
         }
     }
 
@@ -173,7 +181,7 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
             new_world.dayBeginHour = 8;
             new_world.dayEndHour = 18;
 
-            Network.sendPacket(doCommands.world, "New world", new_world);
+            Network.sendPacket(doCommands.world, "Create", new_world);
             //Network.doSave<World>("World", new_world);
         }
     }
@@ -203,7 +211,7 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
         {
             Dictionary<string, string> payload = new Dictionary<string, string>();
             payload.Add("Username", Network.Username);
-            payload.Add("EntityName", allChars[in_index].entityName);
+            payload.Add("EntityName", allChars[in_index].entityObj.entityName);
             payload.Add("Action", "Delete");
             Network.doLogin(payload);
         }
@@ -240,22 +248,22 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
         {
             if (in_index < allChars.Count)
             {
-                Entity getEntity = allChars[in_index];
+                EntityExistanceDTO<EntityDTO> getEntity = allChars[in_index];
                 if (getEntity != null)
                 {
-                    createLabel("Name: " + getEntity.entityName, new Vector3(0f, 50f, 0f), this);
-                    createLabel("Area: " + getEntity.areaName, new Vector3(0f, 25f, 0f), this);
+                    createLabel("Name: " + getEntity.entityObj.entityName, new Vector3(0f, 50f, 0f), this);
+                    createLabel("Area: " +  (getEntity.areaObj != null ? getEntity.areaObj.areaName : "The Void"), new Vector3(0f, 25f, 0f), this);
                     createButton("Online Play " + in_index, "Load", new Vector3(0f, -260f, 0f), objectList);
                     createButton("Online Delete " + in_index, "Delete", new Vector3(150f, -260f, 0f), objectList);
 
-                    current_avatar = new avatarProperties(getEntity.currentAnimal);
-                    current_avatar.primary_currentRed = getEntity.primary_currentRed;
-                    current_avatar.primary_currentGreen = getEntity.primary_currentGreen;
-                    current_avatar.primary_currentBlue = getEntity.primary_currentBlue;
-                    current_avatar.secondary_currentBlue = getEntity.secondary_currentBlue;
-                    current_avatar.secondary_currentRed = getEntity.secondary_currentRed;
-                    current_avatar.secondary_currentGreen = getEntity.secondary_currentGreen;
-                    current_avatar.currentAvatar = Instantiate(Resources.Load<GameObject>("Avatar/" + getEntity.currentAnimal), new Vector3(0f, 0f, 0f), Quaternion.identity);
+                    current_avatar = new avatarProperties(getEntity.entityObj.currentAnimal);
+                    current_avatar.primary_currentRed = getEntity.entityObj.primary_currentRed;
+                    current_avatar.primary_currentGreen = getEntity.entityObj.primary_currentGreen;
+                    current_avatar.primary_currentBlue = getEntity.entityObj.primary_currentBlue;
+                    current_avatar.secondary_currentBlue = getEntity.entityObj.secondary_currentBlue;
+                    current_avatar.secondary_currentRed = getEntity.entityObj.secondary_currentRed;
+                    current_avatar.secondary_currentGreen = getEntity.entityObj.secondary_currentGreen;
+                    current_avatar.currentAvatar = Instantiate(Resources.Load<GameObject>("Avatar/" + getEntity.entityObj.currentAnimal), new Vector3(0f, 0f, 0f), Quaternion.identity);
                     current_avatar.currentAvatar.transform.SetParent(objectList);
                     current_avatar.currentAvatar.transform.localPosition = new Vector3(-637.5f, -363f, -6f);
                     current_avatar.currentAvatar.transform.rotation = Quaternion.Euler(0f, 133f, 0f);
@@ -372,7 +380,7 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
 
     private void loadCharacter(string in_mode, int in_index)
     {
-        Entity getEntity;
+        EntityExistanceDTO<EntityDTO> getEntity;
         if (Network.isConnected)
         {
             getEntity = allChars[in_index];
@@ -381,21 +389,21 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
                 Network.loadedCharacter = getEntity;
                 Configurations.isHost = true;
                 Configurations.textSpeed = .005f;
-                Network.sendPacket(doCommands.mainMenu, "Worlds");
+                Network.sendPacket(doCommands.world, "All worlds");
                 //                Network.doLogin("Load all world");
                 //                SceneManager.LoadScene("LoadResources");
             }
         }
         else
         {
-            getEntity = DataCache.listOfCharacters[in_index];
-            if (getEntity != null)
-            {
-                DataCache.loadedCharacter = getEntity;
-                Configurations.isHost = true;
-                Configurations.textSpeed = .005f;
-                SceneManager.LoadScene("LoadResources");
-            }
+            //getEntity = DataCache.listOfCharacters[in_index];
+            //if (getEntity != null)
+            //{
+            //    DataCache.loadedCharacter = getEntity;
+            //    Configurations.isHost = true;
+            //    Configurations.textSpeed = .005f;
+            //    SceneManager.LoadScene("LoadResources");
+            //}
         }
 
     }
@@ -524,9 +532,9 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
     {
         clearObjectList();
         int charCount = 0;
-        foreach (Entity it_entity in allChars)
+        foreach (EntityExistanceDTO<EntityDTO> it_entity in allChars)
         {
-            createButton("Online " + charCount, it_entity.entityName, new Vector3(-185f, 40f - (50f * charCount), 0f), objectList);
+            createButton("Online " + charCount, it_entity.entityObj.entityName, new Vector3(-185f, 40f - (50f * charCount), 0f), objectList);
             charCount++;
         }
         for (int remaining = charCount; remaining < 5; remaining++)
@@ -636,9 +644,6 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
             case "Online":
                 switch (parser[1])
                 {
-                    case "Login":
-                        loadOnlineList();
-                        break;
                     case "Delete":
                         deleteCharacter("Online", int.Parse(parser[2]));
                         break;
@@ -687,12 +692,13 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
     {
         if (Network.listOfCharacter.Count > 0)
         {
-            List<EntityDTO> temp_wrapper = Network.listOfCharacter.Dequeue();
+            List<EntityExistanceDTO<EntityDTO>> temp_wrapper = Network.listOfCharacter.Dequeue();
             allChars.Clear();
-            foreach (EntityDTO it_entity in temp_wrapper)
-            {
-                allChars.Add(it_entity.getActual());
-            }
+            allChars = temp_wrapper;
+            //foreach (CharacterAccountDTO it_entity in temp_wrapper)
+            //{
+            //    allChars.Add(it_entity);
+            //}
             loadAllCharacter();
         }
 
@@ -717,7 +723,7 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
                     listOfInputFields.TryGetValue("Username", out inputField out_username);
                     Network.isConnected = true;
                     Network.Username = out_username.inputValue.text;
-                    Network.sendPacket(doCommands.mainMenu, "Characters");
+                    Network.sendPacket(doCommands.character, "All Characters");
                     break;
                 case "Denied":
                     toast.newNotification("Invalid login credentials");

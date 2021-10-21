@@ -3,7 +3,8 @@ using UnityEngine;
 
 public class NonPlayerController : MonoBehaviour
 {
-    public Entity playerEntity;
+    public EntityExistanceDTO<EntityDTO> playerEntity;
+    public Vector3 currentRotation;
     public GameObject currentObject;
     public Animator entityAnimation;
 
@@ -18,13 +19,17 @@ public class NonPlayerController : MonoBehaviour
     {
 
         if (transform.position != playerEntity.position ||
-            transform.rotation != playerEntity.rotation)
+            currentRotation != playerEntity.rotation)
         {
-
+            print(playerEntity.rotation);
+            print(transform.rotation + " , " + transform.eulerAngles);
+            transform.eulerAngles = new Vector2(0, playerEntity.rotation.x);
+            print(transform.rotation + " , " + transform.eulerAngles);
+            //        userHead.localRotation = Quaternion.Euler(playerEntity.rotation.y, 0, 0);
             //            StartCoroutine(LerpPosition(positionToMoveTo, 5));
             entityAnimation.SetBool("isWalking", true);
             transform.position = playerEntity.position;
-            transform.rotation = playerEntity.rotation;
+            currentRotation = playerEntity.rotation;
         }
         else
         {

@@ -147,8 +147,6 @@ var entity = new Schema({
 	stamina: {type: Number},
 	maxStamina: {type: Number},
 	state: {type: String},	
-	position: position,
-	rotation: rotation,
 	currentAnimal: {type: String},
 	primary_currentBlue : {type: Number},
 	primary_currentGreen : {type: Number},
@@ -158,9 +156,19 @@ var entity = new Schema({
 	secondary_currentRed : {type: Number}	
 });
 
+var characterAccount = new Schema({
+	entityObj : entity,
+	account : {type: String},
+	areaObj: area,	
+	position: position,
+	rotation: rotation
+})
+
 var entityExistance = new Schema({
 	entityObj: entity,
-	areaObj: area
+	areaObj: area,	
+	position: position,
+	rotation: rotation
 });
 
 var areaItem = new Schema({
@@ -234,3 +242,4 @@ module.exports = mongoose.model("User", user);
 module.exports = mongoose.model("World", world);
 module.exports = mongoose.model("Character", character);
 module.exports = mongoose.model("Cart", cart);
+module.exports = mongoose.model("CharacterAccount", characterAccount);

@@ -70,6 +70,7 @@ public class LoadingScreen : MonoBehaviour, IServerListener
             //            areaGenerator.generateCentralHub("Online", gridSystem, 50, 25, 10, "Central Hub");
             //Network.doLoading("Check Farm");
             Network.sendPacket(doCommands.preload, "Generate farm");
+            print(Network.loadedCharacter._id);
         }
 
 
@@ -92,10 +93,24 @@ public class LoadingScreen : MonoBehaviour, IServerListener
             switch (getResponse["action"])
             {
                 case "Farm generated":
-                    payload["entity"] = Network.loadedCharacter.entityName;
+                    payload["entity"] = Network.loadedCharacter.entityObj.entityName;
                     Network.sendPacket(doCommands.player, "Items", payload);
                     break;
             }
+        }
+
+        if (Network.areaConfig.Count > 0)
+        {
+            AreaDTO get_area = Network.areaConfig.Dequeue();
+            Dictionary<string, string> payload = new Dictionary<string, string>();
+            payload["entity"] = Network.loadedCharacter.entityObj.entityName;
+            Network.sendPacket(doCommands.player, "Items", payload);
+            Network.loadedCharacter.areaObj = get_area.getActual();
+        }
+
+        if (Network.characterQueue.Count > 0)
+        {
+            Network.loadedCharacter = Network.characterQueue.Dequeue();
         }
 
         if (Network.listOfItems.Count > 0)
@@ -104,7 +119,7 @@ public class LoadingScreen : MonoBehaviour, IServerListener
 
             foreach (ItemExistanceDTOWrapper it_item in temp_wrapper)
             {
-                Network.loadedCharacter.backpack.items.Add(it_item);
+                Network.loadedCharacter.entityObj.backpack.items.Add(it_item);
             }
             Network.sendPacket(doCommands.database, "Items");
         }

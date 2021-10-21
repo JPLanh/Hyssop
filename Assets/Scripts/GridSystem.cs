@@ -102,9 +102,9 @@ public class GridSystem : MonoBehaviour
             }
     }
 
-    public void loadAreaNPC(EntityExistanceDTO it_dto)
+    public void loadAreaNPC(EntityExistanceDTO<EntityDTO> it_dto)
     {
-            GameObject new_npc = Instantiate(Resources.Load<GameObject>("NPC"), it_dto.entityObj.position, it_dto.entityObj.rotation);
+            GameObject new_npc = Instantiate(Resources.Load<GameObject>("NPC"), it_dto.position, Quaternion.identity);
             avatarProperties new_npc_properties = new avatarProperties(it_dto.entityObj.currentAnimal);
             new_npc_properties.primary_currentRed = it_dto.entityObj.primary_currentRed;
             new_npc_properties.primary_currentGreen = it_dto.entityObj.primary_currentGreen;
@@ -120,13 +120,14 @@ public class GridSystem : MonoBehaviour
             if (new_npc_properties.currentAvatar.TryGetComponent<AvatarEntity>(out AvatarEntity out_avatarEntity))
             {
                 new_npc_properties.current_avatarEntity = out_avatarEntity;
-            }
-            new_npc_properties.current_avatarEntity.setAllColor(new Color(new_npc_properties.primary_currentRed / 255f, new_npc_properties.primary_currentGreen / 255f, new_npc_properties.primary_currentBlue / 255f), "Primary");
+        }
+            new_npc.transform.eulerAngles = new Vector2(0, it_dto.rotation.x);
+        new_npc_properties.current_avatarEntity.setAllColor(new Color(new_npc_properties.primary_currentRed / 255f, new_npc_properties.primary_currentGreen / 255f, new_npc_properties.primary_currentBlue / 255f), "Primary");
             new_npc_properties.current_avatarEntity.setAllColor(new Color(new_npc_properties.secondary_currentRed / 255f, new_npc_properties.secondary_currentGreen / 255f, new_npc_properties.secondary_currentBlue / 255f), "Secondary");
             shopCheck(new_npc, it_dto);
     }
 
-    private void shopCheck(GameObject in_GO, EntityExistanceDTO in_entity)
+    private void shopCheck(GameObject in_GO, EntityExistanceDTO<EntityDTO> in_entity)
     {
         switch (in_entity.entityObj.entityName)
         {
@@ -427,7 +428,7 @@ public class GridSystem : MonoBehaviour
     }
 
     //Local generation NPC in the area, in creator mode
-    public void spawnNewNPC(Vector3 in_position, Quaternion in_rotation, string in_name, string in_type)
+    public void spawnNewNPC(Vector3 in_position, Vector3 in_rotation, string in_name, string in_type)
     {
         GameObject temp_npc = NPCFactory.generateNewNPC(in_position, in_rotation, in_name, in_type, area.areaName);
         temp_npc.transform.SetParent(NPCList);

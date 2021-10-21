@@ -264,8 +264,8 @@ public class AreaGenerator
         }
 
 
-        in_grid.spawnNewNPC(in_grid.getGridAtLocation(5, 14, 0) + new Vector3(0f, .50f, 0f), Quaternion.Euler(0f, 90f, 0f), "Alex", "General Shop");
-        in_grid.spawnNewNPC(in_grid.getGridAtLocation(42, 17, 0) + new Vector3(0f, .50f, 0f), Quaternion.Euler(0f, 180f, 0f), "Magmus", "Smithery");
+        //in_grid.spawnNewNPC(in_grid.getGridAtLocation(5, 14, 0) + new Vector3(0f, .50f, 0f), Quaternion.Euler(0f, 90f, 0f), "Alex", "General Shop");
+        //in_grid.spawnNewNPC(in_grid.getGridAtLocation(42, 17, 0) + new Vector3(0f, .50f, 0f), Quaternion.Euler(0f, 180f, 0f), "Magmus", "Smithery");
     }
 
     public static void generateCentralHubPath(GridSystem in_grid)

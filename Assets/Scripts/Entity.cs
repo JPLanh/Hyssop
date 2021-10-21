@@ -13,7 +13,7 @@ public class Entity
     public string _id;
     public string entityName;
     public Vector3 position;
-    public Quaternion rotation;
+    public Vector3 rotation;
     public string areaName;
     public Backpack backpack = new Backpack();
     public int stamina;
@@ -160,7 +160,7 @@ public class EntityDTO
     public string _id;
     public string entityName;
     public Vector3 position;
-    public Quaternion rotation;
+    public Vector3 rotation;
     public string areaName;
     public Backpack backpack = new Backpack();
     public int stamina;

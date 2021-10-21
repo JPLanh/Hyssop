@@ -16,6 +16,17 @@ public class AreaDTO
     public int width;
     public int height;
     public bool buildable;
+
+    public Area getActual()
+    {
+        Area temp_area = new Area();
+        temp_area.areaName = areaName;
+        temp_area.length = length;
+        temp_area.width = width;
+        temp_area.height = height;
+        temp_area.buildable = buildable;
+        return temp_area;
+    }
 }
 
 [Serializable]
@@ -90,13 +101,24 @@ public class AreaItemDTO
 }
 
 [Serializable]
-public class EntityExistanceDTO
+public class EntityExistanceDTO<T>
 {
     public string _id;
-    public EntityDTO entityObj;
-    public AreaDTO areaObj;
+    public T entityObj;
+    public Vector3 position;
+    public Vector3 rotation;
+    public Area areaObj;
+
 }
 
+[Serializable]
+public class CharacterAccountDTO
+{
+    public EntityDTO entityObj;
+    public AreaDTO areaObj;
+    public Vector3 position;
+    public Quaternion rotation;
+}
 [Serializable]
 public class AreaPlantDTO
 {

@@ -16,7 +16,7 @@ public class NPCFactory : MonoBehaviour
     }
 
     //Create a new data for the NPC and insert it into the cache
-    public static Entity createNewNPC(string in_name, Vector3 in_position, Quaternion in_rotation, string in_type, string in_area)
+    public static Entity createNewNPC(string in_name, Vector3 in_position, Vector3 in_rotation, string in_type, string in_area)
     {
         Entity new_npc = new Entity();
         new_npc.areaName = in_area;
@@ -30,10 +30,10 @@ public class NPCFactory : MonoBehaviour
     }
 
     //Instantiate a new NPC into the area
-    public static GameObject generateNewNPC(Vector3 in_position, Quaternion in_rotation, string in_name, string in_type, string in_area)
+    public static GameObject generateNewNPC(Vector3 in_position, Vector3 in_rotation, string in_name, string in_type, string in_area)
     {
         Entity temp_NPC = createNewNPC(in_name, in_position, in_rotation, in_type, in_area);
-        GameObject temp_Obj = Instantiate(Resources.Load<GameObject>("NPC"), in_position, in_rotation);
+        GameObject temp_Obj = Instantiate(Resources.Load<GameObject>("NPC"), in_position, Quaternion.identity);
         if (temp_Obj.TryGetComponent<NPCEntity>(out NPCEntity out_entity))
         {
             out_entity.npc = temp_NPC;
@@ -85,7 +85,7 @@ public class NPCFactory : MonoBehaviour
     //Load an exisisting NPC into the area
     public static GameObject loadNPC(Entity in_npc, string in_area)
     {
-        GameObject temp_Obj = Instantiate(Resources.Load<GameObject>("NPC"), in_npc.position, in_npc.rotation);
+        GameObject temp_Obj = Instantiate(Resources.Load<GameObject>("NPC"), in_npc.position, Quaternion.identity);
         temp_Obj.name = in_npc.entityName;
         if (temp_Obj.TryGetComponent<NPCEntity>(out NPCEntity out_entity))
         {
