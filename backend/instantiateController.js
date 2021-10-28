@@ -33,7 +33,7 @@ exports.createNewAreaItem = async function(in_socket, in_entityName, in_itemName
 	.then(async (res) =>
 	{
 		res["quantity"] = in_quantity;
-		return await new areaItem({"itemObj": res, "areaObj": in_area, "position": new position({"x": in_xPos, "y": in_yPos, "z": in_zPos}), "rotation": new rotation({"x": in_xRot, "y": in_yRot, "z": in_zRot, "w": in_wRot})}).save();
+		return await new areaItem({"entityObj": res, "areaObj": in_area, "position": new position({"x": in_xPos, "y": in_yPos, "z": in_zPos}), "rotation": new rotation({"x": in_xRot, "y": in_yRot, "z": in_zRot, "w": in_wRot})}).save();
 	})
 	.then(async (getNewAreaItem) =>
 	{		
@@ -50,23 +50,23 @@ exports.createNewNPC = async function(in_param, in_area, in_pos){
 }
 
 exports.storage_getItem = async function(in_storageName, in_itemName, in_quantity){
-    await itemExistance.findOne({"storageObj.itemName": in_storageName, "itemObj.itemName": in_itemName}).exec()
+    await itemExistance.findOne({"storageObj.itemName": in_storageName, "entityObj.itemName": in_itemName}).exec()
     .then(async (item_found) => {
         if (item_found) {
-            item_found["itemObj"]["quantity"] += parseInt(in_quantity);
-            if (item_found["itemObj"]["quantity"] <= 0){
+            item_found["entityObj"]["quantity"] += parseInt(in_quantity);
+            if (item_found["entityObj"]["quantity"] <= 0){
                 item_found.remove();
             } else {
                 item_found.save();
             }
         } else {
-            let getStorage = areaItem.findOne({"itemObj.itemName": in_storageName}).exec()
+            let getStorage = areaItem.findOne({"entityObj.itemName": in_storageName}).exec()
             let getItem = itemDatabase.findOne({"itemName": in_itemName}).exec()
             await Promise.all([getStorage, getItem])
             .then(async (res) => {
                 return await new item({"itemName": res[1]["itemName"], "itemType": res[1]["itemType"], maxDurability: res[1]["maxDurability"], durability: res[1]["maxDurability"], capacity: 0, maxCapacity: res[1]["maxCapacity"], quantity: in_quantity}).save()
                 .then(async (newItem) => {
-                    return await new itemExistance({"storageObj": res[0]["itemObj"], "itemObj": newItem}).save()
+                    return await new itemExistance({"storageObj": res[0]["entityObj"], "entityObj": newItem}).save()
                 })
             })
         }
@@ -119,11 +119,11 @@ async function generateFarmItems(in_socket, in_name, in_area)
 {
     return new Promise(async (resolve, reject) => {
 
-		instantiator.createNewAreaItem(in_socket, in_name, "Torch", 1, in_area, 18, 5.1, 7, .7, 0, 0, .7, null);	
+		instantiator.createNewAreaItem(in_socket, in_name, "Torch", 1, in_area, 18, 5.1, 7, 90, 0, 0, 0, null);	
 		await instantiator.createNewAreaItem(in_socket, in_name, "Basic Well", 2, in_area, 7, 0, 6, 0, 0, 0, 0, null)
 		.then(async (instWell) => {
-			instWell["itemObj.capacity"] = 50;
-			instWell["itemObj.maxCapacity"] = 100;
+			instWell["entityObj.capacity"] = 50;
+			instWell["entityObj.maxCapacity"] = 100;
 			instWell.save();
 			serverController.refills.push(instWell);			
 		})
@@ -190,7 +190,7 @@ exports.generateCentralHubNPC = async function(in_area)
     trevik["maxStamina"] = 100;
     trevik["state"] = "";
     pos["position"] = new position({"x": 5, "y": 0, "z": 13});
-    pos["rotation"] = new rotation({"x": 0, "y": 0, "z": 0, "w": 0});
+    pos["rotation"] = new rotation({"x": 90, "y": 0, "z": 0, "w": 0});
     trevik["currentAnimal"] = "Fox";
     trevik["primary_currentBlue"] = 32;
     trevik["primary_currentRed"] = 84;
@@ -223,7 +223,7 @@ exports.generateCentralHubNPC = async function(in_area)
         Izak["maxStamina"] = 100;
         Izak["state"] = "";
         pos["position"] = new position({"x": 42, "y": 0, "z": 17});
-        pos["rotation"] = new rotation({"x": 90, "y": 0, "z": 0, "w": 0});
+        pos["rotation"] = new rotation({"x": 180, "y": 0, "z": 0, "w": 0});
         Izak["currentAnimal"] = "Cat";
         Izak["primary_currentBlue"] = 122;
         Izak["primary_currentRed"] = 122;
@@ -320,6 +320,7 @@ async function generateBasicShop(in_socket, in_area, x_start, y_start, z_start, 
                                     notAWall = true;
                                     new areaIndex({"areaObj": in_area, "x": x, "y": y, "z": z, "objectName": "Glass", "destructable": false, "pickable": false, "state": ""}).save();                                
                                 }
+//                                instantiator.createNewAreaItem(in_socket, "Central Hub", "Torch", 1, in_area, (x_start + x_size)/2, z_size + .1, (y_start + y_size)/2, 90, 0, 0, 0, null);    
                                 break;
                             case "East":                            
                                 if ((x == x_start + parseInt(x_size/2) && y == y_start  && z < z_start + 3) ||
@@ -336,6 +337,8 @@ async function generateBasicShop(in_socket, in_area, x_start, y_start, z_start, 
                                     notAWall = true;
                                     new areaIndex({"areaObj": in_area, "x": x, "y": y, "z": z, "objectName": "Glass", "destructable": false, "pickable": false, "state": ""}).save();                                
                                 }
+                                break;
+
                             }
                             if (!notAWall)
                                 new areaIndex({"areaObj": in_area, "x": x, "y": y, "z": z, "objectName": "Wooden Wall", "destructable": false, "pickable": false, "state": ""}).save();
@@ -355,7 +358,9 @@ async function generateBasicShop(in_socket, in_area, x_start, y_start, z_start, 
             }
         }
 
-        instantiator.createNewAreaItem(in_socket, "Central Hub", "Torch", 1, in_area, (x_start + x_size)/2, z_size + .1, (y_start + y_size)/2, .7, 0, 0, .7, null);    
+                instantiator.createNewAreaItem(in_socket, "Central Hub", "Torch", 1, in_area, (x_start + x_size/2), z_size + .1, (y_start + y_size/2), 90, 0, 0, 0, null);    
+        // console.log("Torch: " + x_start + " , "+ x_size + " / " + y_start + " , " + y_size + " / " + (x_start + x_size)/2 + " / " + (y_start + y_size)/2)
+        // instantiator.createNewAreaItem(in_socket, "Central Hub", "Torch", 1, in_area, (x_start + x_size)/2, z_size + .1, (y_start + y_size)/2, 90, 0, 0, 0, null);    
 
         await resolve(in_area);
     })
@@ -449,7 +454,7 @@ exports.generatePlayerFarm = async function(in_socket, in_world, in_name){
             newParam["data"] = JSON.stringify(get_character).replace(/"/g, "`");
             in_socket.emit("Get Data", newParam);
         })
-        await areaItem.findOneAndUpdate({"itemObj.itemName": "Basic Well", "itemObj.binder": in_name + "_farm"}, {"itemObj.capacity": 50, "itemObj.maxCapacity": 100}, {upsert:true}).exec();
+        await areaItem.findOneAndUpdate({"entityObj.itemName": "Basic Well", "entityObj.binder": in_name + "_farm"}, {"entityObj.capacity": 50, "entityObj.maxCapacity": 100}, {upsert:true}).exec();
         return getArea;
     })
 }
@@ -462,11 +467,11 @@ exports.newWorld = async function(in_socket, in_world){
 exports.entity_getItem = async function(in_socket, in_entityName, in_itemName, in_quantity){
     let newParam = {};
 
-    await itemExistance.findOne({"binder.entityName": in_entityName, "itemObj.itemName": in_itemName}).exec()
+    await itemExistance.findOne({"binder.entityName": in_entityName, "entityObj.itemName": in_itemName}).exec()
     .then(async (item_found) => {
         if (item_found) {
-            item_found["itemObj"]["quantity"] += parseInt(in_quantity);
-            if (item_found["itemObj"]["quantity"] <= 0){
+            item_found["entityObj"]["quantity"] += parseInt(in_quantity);
+            if (item_found["entityObj"]["quantity"] <= 0){
                 item_found.remove();
             } else {
                 item_found.save();
@@ -480,7 +485,7 @@ exports.entity_getItem = async function(in_socket, in_entityName, in_itemName, i
                 return await new item({"itemName": res[1]["itemName"], "itemType": res[1]["itemType"], maxDurability: res[1]["maxDurability"], durability: res[1]["maxDurability"], capacity: 0, maxCapacity: res[1]["maxCapacity"], quantity: in_quantity}).save()
                 .then(async (newItem) => {
                     newParam["Item"] = newItem;             
-                    return await new itemExistance({"binder": res[0], "itemObj": newItem}).save()
+                    return await new itemExistance({"binder": res[0], "entityObj": newItem}).save()
                 })
                 .then(async (newItem) =>{
                     in_socket.emit("Get Item", newItem);
@@ -493,11 +498,11 @@ exports.entity_getItem = async function(in_socket, in_entityName, in_itemName, i
 exports.npc_getItem = async function(in_entityName, in_itemName, in_quantity, in_buyPrice, in_sellPrice, in_priceRoof, in_itemRoof){
     let newParam = {};
 
-    return await itemExistance.findOne({"binder.entityName": in_entityName, "itemObj.itemName": in_itemName}).exec()
+    return await itemExistance.findOne({"binder.entityName": in_entityName, "entityObj.itemName": in_itemName}).exec()
     .then(async (item_found) => {
         if (item_found) {
-            item_found["itemObj"]["quantity"] += parseInt(in_quantity);
-            if (item_found["itemObj"]["quantity"] <= 0){
+            item_found["entityObj"]["quantity"] += parseInt(in_quantity);
+            if (item_found["entityObj"]["quantity"] <= 0){
                 item_found.remove();
             } else {
                 item_found.save();

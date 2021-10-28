@@ -69,8 +69,12 @@ public class LoadingScreen : MonoBehaviour, IServerListener
             //Load online version
             //            areaGenerator.generateCentralHub("Online", gridSystem, 50, 25, 10, "Central Hub");
             //Network.doLoading("Check Farm");
-            Network.sendPacket(doCommands.preload, "Generate farm");
-            print(Network.loadedCharacter._id);
+            Dictionary<string, string> payload = new Dictionary<string, string>();
+            payload["entityID"] = Network.loadedCharacter._id;
+            Network.sendPacket(doCommands.preload, "Generate farm", payload);
+            //print(Network.loadedCharacter._id);
+            //print(Network.loadedCharacter.areaObj);
+            //print(Network.loadedCharacter.areaObj.areaName);
         }
 
 
@@ -105,7 +109,8 @@ public class LoadingScreen : MonoBehaviour, IServerListener
             Dictionary<string, string> payload = new Dictionary<string, string>();
             payload["entity"] = Network.loadedCharacter.entityObj.entityName;
             Network.sendPacket(doCommands.player, "Items", payload);
-            Network.loadedCharacter.areaObj = get_area.getActual();
+            if (Network.loadedCharacter.areaObj == null)
+                Network.loadedCharacter.areaObj = get_area.getActual();
         }
 
         if (Network.characterQueue.Count > 0)

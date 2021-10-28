@@ -8,7 +8,7 @@ using UnityEngine;
  * 
  */
 [Serializable]
-public class Entity
+public class Entity : ITransferer
 {
     public string _id;
     public string entityName;
@@ -151,6 +151,21 @@ public class Entity
                 break;
         }
         return dialog;
+    }
+
+    public string getID()
+    {
+        return _id;
+    }
+
+    public string getType()
+    {
+        return "Entity";
+    }
+
+    public Backpack getInventory()
+    {
+        return backpack;
     }
 }
 

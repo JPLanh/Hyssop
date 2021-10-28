@@ -24,7 +24,7 @@ public class StorageEntity : MonoBehaviour, IInteractable, IMenu
             getInteractor.accessTrade();
             storage.inventory.items = new List<ItemExistanceDTOWrapper>();
             Dictionary<string, string> payload = new Dictionary<string, string>();
-            payload["storageID"] = itemEntity.item.itemObj._id;
+            payload["storageID"] = itemEntity.item.entityObj._id;
             Network.sendPacket(doCommands.storage, "Access", payload);
 //            Network.accessStorage("Storage", name);
         }

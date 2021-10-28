@@ -12,6 +12,8 @@ public class TradeMenu : MonoBehaviour, IActionListener, IServerListener
     public StorageEntity focusStorage;
     public PlayerController currentPlayer;
     public string menuState;
+    public GameObject transfer_dialog_go;
+    public GameObject canvas_go;
 
     public GameObject newButton;
     private bool modifier;
@@ -173,8 +175,9 @@ public class TradeMenu : MonoBehaviour, IActionListener, IServerListener
                     if (!Network.isConnected) trade(currentPlayer.playerEntity.backpack, focusStorage.storage.inventory, currentPlayer.playerEntity.backpack.items[int.Parse(parser[2])]);
                     else
                     {
-                        Network.trade("Entity", currentPlayer.playerEntity.entityName, "Storage", focusStorage.itemEntity.item.itemObj._id, currentPlayer.playerEntity.backpack.items[int.Parse(parser[2])]._id,
-                            modifier ? currentPlayer.playerEntity.backpack.items[int.Parse(parser[2])].ItemObj.quantity : 1);
+                        tradeSelected(currentPlayer.playerEntity.backpack.items[int.Parse(parser[2])], currentPlayer.playerEntity, focusStorage.itemEntity.item);
+//                        Network.trade("Entity", currentPlayer.playerEntity.entityName, "Storage", focusStorage.itemEntity.item.itemObj._id, currentPlayer.playerEntity.backpack.items[int.Parse(parser[2])]._id,
+//                            modifier ? currentPlayer.playerEntity.backpack.items[int.Parse(parser[2])].ItemObj.quantity : 1);
 
                     }
 
@@ -187,8 +190,9 @@ public class TradeMenu : MonoBehaviour, IActionListener, IServerListener
                             trade(focusStorage.storage.inventory, currentPlayer.playerEntity.backpack, focusStorage.storage.inventory.items[int.Parse(parser[2])]);
                         else
                         {
-                            Network.trade("Storage", focusStorage.itemEntity.item.itemObj._id, "Entity", currentPlayer.playerEntity.entityName, focusStorage.storage.inventory.items[int.Parse(parser[2])]._id,
-                                modifier ? focusStorage.storage.inventory.items[int.Parse(parser[2])].ItemObj.quantity : 1);
+                            tradeSelected(focusStorage.storage.inventory.items[int.Parse(parser[2])], focusStorage.itemEntity.item, currentPlayer.playerEntity);
+                            //                            Network.trade("Storage", focusStorage.itemEntity.item.itemObj._id, "Entity", currentPlayer.playerEntity.entityName, focusStorage.storage.inventory.items[int.Parse(parser[2])]._id,
+                            //                                modifier ? focusStorage.storage.inventory.items[int.Parse(parser[2])].ItemObj.quantity : 1);
                         }
                     }
                     else
@@ -207,7 +211,7 @@ public class TradeMenu : MonoBehaviour, IActionListener, IServerListener
             ItemExistanceDTOWrapper new_wrapper = Network.itemRetrieved.Dequeue();
             if (new_wrapper.storageObj != null)
             {
-                if (focusStorage.itemEntity.item.itemObj._id.Equals(new_wrapper.storageObj._id))
+                if (focusStorage.itemEntity.item.entityObj._id.Equals(new_wrapper.storageObj._id))
                 {
                     ItemExistanceDTOWrapper getItem = focusStorage.storage.inventory.items.Find(x => x.ItemObj.itemName == new_wrapper.ItemObj.itemName);
                     if (getItem != null)
@@ -264,6 +268,16 @@ public class TradeMenu : MonoBehaviour, IActionListener, IServerListener
                 focusStorage.storage.inventory.items.Add(it_item);
             }
             loadPanel("Right", focusStorage.storage.inventory);
+        }
+    }
+    private void tradeSelected(ItemExistanceDTOWrapper in_item, ITransferer in_from, ITransferer in_to)
+    {
+        transfer_dialog_go = Instantiate(Resources.Load<GameObject>("Transfer_amt_dialog"), new Vector3(0f, 0f, 0f), Quaternion.identity);
+        transfer_dialog_go.transform.SetParent(canvas_go.transform);
+        transfer_dialog_go.transform.localPosition = new Vector3(0f, 0f, 0f);
+        if (transfer_dialog_go.TryGetComponent<Transder_Dialog>(out Transder_Dialog out_transfer_dialog))
+        {
+            out_transfer_dialog.transferLoad(in_item, in_from, in_to, currentPlayer, "Transfer");
         }
     }
 }

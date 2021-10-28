@@ -158,7 +158,7 @@ async function dayBegin(it_world){
 	 	return await areaItem.find({"areaObj.areaName": "Central Hub", "areaObj.worldObj.worldName": it_world["worldName"]}).exec()
 		 .then(async (listOfDoors) => {
 		 	listOfDoors.forEach(async (it_door) => {
-		 		it_door["itemObj"]["state"] = "Open";
+		 		it_door["entityObj"]["state"] = "Open";
 		 		it_door.save();
 		 	})
 		 })

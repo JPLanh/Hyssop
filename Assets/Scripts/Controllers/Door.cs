@@ -19,14 +19,14 @@ public class Door : MonoBehaviour, IInteractable, ITimeListener
     // Update is called once per frame
     void Update()
     {
-        if (isOpen && itemEntity.item.itemObj.state.Equals("Closed"))
+        if (isOpen && itemEntity.item.entityObj.state.Equals("Closed"))
         {
             isOpen = false;
             doorTransform.parent.position = doorTransform.parent.position - new Vector3(0f, 0f, .5f);
             doorTransform.parent.eulerAngles = doorTransform.parent.eulerAngles + new Vector3(0f, 90f, 0f);
         }
 
-        if (!isOpen && itemEntity.item.itemObj.state.Equals("Open"))
+        if (!isOpen && itemEntity.item.entityObj.state.Equals("Open"))
         {
             isOpen = true;
             doorTransform.parent.position = doorTransform.parent.position + new Vector3(0f, 0f, .5f);
@@ -43,23 +43,23 @@ public class Door : MonoBehaviour, IInteractable, ITimeListener
                 isOpen = false;
                 doorTransform.parent.position = doorTransform.parent.position - new Vector3(0f, 0f, .5f);
                 doorTransform.parent.eulerAngles = doorTransform.parent.eulerAngles + new Vector3(0f, 90f, 0f);
-                itemEntity.item.itemObj.state = "Closed";
+                itemEntity.item.entityObj.state = "Closed";
             }
             else
             {
                 if (in_modified)
                 {
-                    itemEntity.item.itemObj.state = itemEntity.item.itemObj.state.Equals("Locked") ? "Unlocked" : "Locked";
-                    getInteractor.toastNotifications.newNotification("Door is now " + itemEntity.item.itemObj.state);
+                    itemEntity.item.entityObj.state = itemEntity.item.entityObj.state.Equals("Locked") ? "Unlocked" : "Locked";
+                    getInteractor.toastNotifications.newNotification("Door is now " + itemEntity.item.entityObj.state);
                 }
                 else
                 {
-                    if (!itemEntity.item.itemObj.state.Equals("Locked"))
+                    if (!itemEntity.item.entityObj.state.Equals("Locked"))
                     {
                         isOpen = true;
                         doorTransform.parent.position = doorTransform.parent.position + new Vector3(0f, 0f, .5f);
                         doorTransform.parent.eulerAngles = doorTransform.parent.eulerAngles + new Vector3(0f, -90f, 0f);
-                        itemEntity.item.itemObj.state = "Open";
+                        itemEntity.item.entityObj.state = "Open";
                     }
                 }
             }
@@ -73,11 +73,11 @@ public class Door : MonoBehaviour, IInteractable, ITimeListener
 
     public void dayEndAction()
     {
-        itemEntity.item.itemObj.state = "Closed";
+        itemEntity.item.entityObj.state = "Closed";
     }
 
     public void dayBeginAction()
     {
-        itemEntity.item.itemObj.state = "Open";
+        itemEntity.item.entityObj.state = "Open";
     }
 }

@@ -22,6 +22,8 @@ public class PlayerMenu : MonoBehaviour, IActionListener, IServerListener
     private string focusButton;
     private List<ItemExistanceDTOWrapper> shopList = new List<ItemExistanceDTOWrapper>();
 
+    public GameObject transfer_dialog_go;
+    public GameObject canvas_go;
     public string menuState;
 
     // Start is called before the first frame update
@@ -481,47 +483,7 @@ public class PlayerMenu : MonoBehaviour, IActionListener, IServerListener
                 ItemExistanceDTOWrapper tradeItem = shopList[int.Parse(parser[1])];
                 if (tradeItem != null)
                 {
-
-                    if (currentPlayer.playerEntity.backpack.spaceAvailable(tradeItem))
-                    {
-                        ItemExistanceDTOWrapper currencyTrade = currentPlayer.playerEntity.backpack.getItemByName("Silver");
-                        if (currencyTrade != null)
-                        {
-                            if (currencyTrade.ItemObj.quantity >= tradeItem.itemMarketObj.buyPrice)
-                            {
-                                //if (currentPlayer.playerEntity.backpack.createItem(currentPlayer.playerEntity.entityName, tradeItem.ItemObj.itemName, 1))
-                                //{
-
-                                Network.trade("NPC", focusShop.currentNPC._id, "Entity", currentPlayer.playerEntity.entityName, tradeItem._id, 1);
-//                                currentPlayer.playerEntity.backpack.localCreateItem(tradeItem.ItemObj.itemName, 1);
-                                //                            tradeItem.ItemObj.quantity -= 1;
-                                //                            currentPlayer.playerEntity.backpack.localCreateItem(currentPlayer.playerEntity.entityName, tradeItem.ItemObj.itemName, 1);
-                                Network.trade("Entity", currentPlayer.playerEntity.entityName, "NPC", focusShop.currentNPC._id, currencyTrade._id, tradeItem.itemMarketObj.buyPrice);
-//                                currentPlayer.playerEntity.backpack.localCreateItem(currencyTrade.ItemObj.itemName, -tradeItem.itemMarketObj.buyPrice);
-                                //                            currentPlayer.playerEntity.backpack.localModifyItem(currencyTrade, tradeItem.itemMarketObj.buyPrice);
-                                //                                DataCache.adjustMarketPrice(tradeItem);
-                                currentPlayer.mainMenu.updateMenu();
-
-                                //}
-                                //else
-                                //{
-                                //    currentPlayer.toastNotifications.newNotification("Your bag is full");
-                                //}
-                            }
-                            else
-                            {
-                                currentPlayer.toastNotifications.newNotification("You do not have enough Silver");
-                            }
-                        }
-                        else
-                        {
-                            currentPlayer.toastNotifications.newNotification("You do not have any Silver");
-                        }
-                    }
-                    else
-                    {
-                        currentPlayer.toastNotifications.newNotification("You have no more bag space available for any new items.");
-                    }
+                    tradeSelected(tradeItem);
                 }
                 break;
             default:
@@ -619,6 +581,16 @@ public class PlayerMenu : MonoBehaviour, IActionListener, IServerListener
                     shopList.Add(it_itemObj);
                 }
             }
+        }
+    }
+
+    private void tradeSelected(ItemExistanceDTOWrapper in_item)
+    {
+        transfer_dialog_go = Instantiate(Resources.Load<GameObject>("Transfer_amt_dialog"), new Vector3(0f, 0f, 0f), Quaternion.identity);
+        transfer_dialog_go.transform.SetParent(canvas_go.transform);
+        transfer_dialog_go.transform.localPosition = new Vector3(0f, 0f, 0f);
+        if (transfer_dialog_go.TryGetComponent<Transder_Dialog>(out Transder_Dialog out_transfer_dialog)){
+            out_transfer_dialog.transferLoad(in_item, currentPlayer.playerEntity, focusShop.currentNPC,  currentPlayer, "Sell");
         }
     }
 }

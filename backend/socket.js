@@ -41,15 +41,19 @@ module.exports = async function(socket){
 					.then(async (found_user) => {
 						if (found_user != null){
 							found_user["active"] = true;
-							getSocket.username = param["Username"];
+//							getSocket.username = param["Username"];
 							found_user.save();
 
 							serverPing = setInterval(async () =>{
-								await character.find({}).select('-backpack -holding -maxStamina -stamina').exec()
-								.then(async (get_characters_list) => 
-								{
-									return await sendCharacterData(getSocket, 5, get_characters_list);	
-								})
+								if (getSocket.username != null){
+
+									await entityExistance.find({"_id": { $ne: mongoose.Types.ObjectId(getSocket.username)}}).exec()
+									.then(async (get_characters_list) => 
+									{
+										sendPacket(getSocket, "Updates", get_characters_list);
+	//									return await sendCharacterData(getSocket, 5, get_characters_list);	
+									})
+								}
 							}, 33);
 							payload["action"] = "Welcome";
 						} else {
@@ -143,12 +147,16 @@ module.exports = async function(socket){
 
 		getSocket.on('disconnecting', async () => 
 		{
-			user.findOne({"username": getSocket.username}).exec()
-			.then(async (found_user) => {
-				found_user["active"] = false;
-				clearInterval(serverPing);
-				found_user.save();
-			});
+			entityExistance.deleteOne({"_id": getSocket.username}).exec()
+			.then(async (found_existance) => {
+				clearInterval(serverPing);				
+			})
+			// user.findOne({"username": getSocket.username}).exec()
+			// .then(async (found_user) => {
+			// 	found_user["active"] = false;
+			// 	clearInterval(serverPing);
+			// 	found_user.save();
+			// });
 		});
 
 		getSocket.on('disconnect', async () => {

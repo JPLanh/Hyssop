@@ -8,7 +8,8 @@ public class InGameListener : MonoBehaviour, IServerListener
     [SerializeField] TimeSystem timeSystem;
     [SerializeField] GridSystem currentGrid;
 
-    static Dictionary<string, NonPlayerController> characterTracker = new Dictionary<string, NonPlayerController>();
+    public GameObject npcList;
+    static public Dictionary<string, NonPlayerController> characterTracker = new Dictionary<string, NonPlayerController>();
 
     public void serverResponseListener()
     {
@@ -28,6 +29,7 @@ public class InGameListener : MonoBehaviour, IServerListener
             currentPlayer.teleportToDestination();
 
             currentPlayer.isLoading(true, "Loading teh area you're in", 0);
+
 
             AreaDTO temp_wrapper = Network.areaConfig.Dequeue();
             currentGrid.loadAreaConfig(temp_wrapper);
@@ -55,9 +57,9 @@ public class InGameListener : MonoBehaviour, IServerListener
         {
             currentPlayer.isLoading(true, "Loading teh things", 0);
 
-            List<AreaItemDTO> get_list = Network.listOfAreaItems.Dequeue();
+            List<EntityExistanceDTO<ItemDTO>> get_list = Network.listOfAreaItems.Dequeue();
             int count = 0;
-            foreach (AreaItemDTO it_areaItem in get_list)
+            foreach (EntityExistanceDTO<ItemDTO> it_areaItem in get_list)
             {
                 currentPlayer.isLoading(true, "Loading teh things", (((float)count) / ((float)get_list.Count) * 100));
                 currentGrid.loadAreaItem(it_areaItem);
@@ -92,11 +94,9 @@ public class InGameListener : MonoBehaviour, IServerListener
             foreach (EntityExistanceDTO<EntityDTO> it_areaNpc in get_list)
             {
                 currentPlayer.isLoading(true, "Loading everywun", (((float)count) / ((float)get_list.Count) * 100));
-                currentGrid.loadAreaNPC(it_areaNpc);
+//                currentGrid.loadAreaNPC(it_areaNpc);
                 count++;
             }
-
-
             currentPlayer.isLoading(false);
             currentPlayer.loadTutorial();
         }
@@ -134,59 +134,90 @@ public class InGameListener : MonoBehaviour, IServerListener
             }  
         }
 
-        if (Network.characterNetworkUpdate.Count > 0)
+//        if (Network.characterNetworkUpdate.Count > 0)
+//        {
+//            characterListWrapper characterWrapper = Network.characterNetworkUpdate.Dequeue();
+//            Network.characterNetworkUpdate.Clear();
+//            if (characterWrapper != null && characterWrapper.characterList != null)
+//            {
+//                foreach (EntityDTO it_entity in characterWrapper.characterList)
+//                {
+//                    if (!it_entity.entityName.Equals(Network.loadedCharacter.entityObj.entityName))
+//                    {
+//                        if (it_entity.areaName.Equals(currentGrid.area.areaName))
+//                        {
+//                            it_entity.time = characterWrapper.time;
+//                            if (InGameListener.characterTracker.TryGetValue(it_entity.entityName, out NonPlayerController out_npc))
+//                            {
+//                                {
+////                                    out_npc.playerEntity = it_entity.getActual();
+//                                }
+//                            }
+//                            else
+//                            {
+//                                GameObject temp_object = Instantiate(Resources.Load<GameObject>("NPC"), it_entity.position, Quaternion.identity);
+//                                if (temp_object.TryGetComponent<NonPlayerController>(out NonPlayerController out_NPC))
+//                                {
+////                                    out_NPC.playerEntity = it_entity.getActual();
+//                                    out_NPC.currentObject = temp_object;
+//                                    InGameListener.characterTracker.Add(it_entity.entityName, out_NPC);
+//                                }
+//                            }
+//                        }
+//                        else
+//                        {
+//                            if (InGameListener.characterTracker.TryGetValue(it_entity.entityName, out NonPlayerController out_npc))
+//                            {
+//                                {
+//                                    Destroy(out_npc.currentObject);
+//                                    Destroy(out_npc.gameObject);
+//                                }
+//                            }
+//                        }
+//                    }
+//                }
+//            }
+//        }
+
+        JsonSerializerSettings settings = new JsonSerializerSettings();
+        settings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
+
+        if (Network.listOfUpdatedPlayers.Count > 0)
         {
-            characterListWrapper characterWrapper = Network.characterNetworkUpdate.Dequeue();
-            Network.characterNetworkUpdate.Clear();
-            if (characterWrapper != null && characterWrapper.characterList != null)
+            List<EntityExistanceDTO<EntityDTO>> entity_list = Network.listOfUpdatedPlayers.Dequeue();
+            foreach (EntityExistanceDTO<EntityDTO> it_entity in entity_list)
             {
-                foreach (EntityDTO it_entity in characterWrapper.characterList)
+                if (it_entity.areaObj.areaName.Equals(currentGrid.area.areaName))
                 {
-                    if (!it_entity.entityName.Equals(Network.loadedCharacter.entityObj.entityName))
+                    if (characterTracker.TryGetValue(it_entity._id, out NonPlayerController out_npc))
                     {
-                        if (it_entity.areaName.Equals(currentGrid.area.areaName))
+                        out_npc.playerEntity = it_entity;
+                        out_npc.lastUpdate = Time.time;
+                        out_npc.currentObject.transform.position = it_entity.position;
+                        out_npc.currentObject.transform.eulerAngles = new Vector2(0, it_entity.rotation.x);
+                    }
+                    else
+                    {
+                        GameObject temp_object = Instantiate(Resources.Load<GameObject>("NPC"), it_entity.position, Quaternion.identity);
+                        if (temp_object.TryGetComponent<NonPlayerController>(out NonPlayerController out_NPC))
                         {
-                            it_entity.time = characterWrapper.time;
-                            if (InGameListener.characterTracker.TryGetValue(it_entity.entityName, out NonPlayerController out_npc))
-                            {
-                                {
-//                                    out_npc.playerEntity = it_entity.getActual();
-                                }
-                            }
-                            else
-                            {
-                                GameObject temp_object = Instantiate(Resources.Load<GameObject>("NPC"), it_entity.position, Quaternion.identity);
-                                if (temp_object.TryGetComponent<NonPlayerController>(out NonPlayerController out_NPC))
-                                {
-//                                    out_NPC.playerEntity = it_entity.getActual();
-                                    out_NPC.currentObject = temp_object;
-                                    InGameListener.characterTracker.Add(it_entity.entityName, out_NPC);
-                                }
-                            }
-                        }
-                        else
-                        {
-                            if (InGameListener.characterTracker.TryGetValue(it_entity.entityName, out NonPlayerController out_npc))
-                            {
-                                {
-                                    Destroy(out_npc.currentObject);
-                                    Destroy(out_npc.gameObject);
-                                }
-                            }
+                            out_NPC.currentObject = temp_object;
+                            temp_object.transform.SetParent(npcList.transform);
+                            out_NPC.playerEntity = it_entity;
+                            out_NPC.load();
+                            out_NPC.lastUpdate = Time.time;
+                            InGameListener.characterTracker.Add(it_entity._id, out_NPC);
                         }
                     }
                 }
             }
         }
 
-        JsonSerializerSettings settings = new JsonSerializerSettings();
-        settings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
         if (!currentPlayer.canvas.tradeMenu.gameObject.activeInHierarchy)
         {
             if (Network.itemRetrieved.Count > 0)
             {
                 ItemExistanceDTOWrapper getItem = Network.itemRetrieved.Dequeue();
-                print(currentPlayer.playerEntity.entityName + " , " + (getItem.binder.entityName));
                 if (currentPlayer.playerEntity.entityName.Equals(getItem.binder.entityName))
                 {
                     //                    currentPlayer.playerEntity.backpack.createItem(getItem);
@@ -230,5 +261,14 @@ public class InGameListener : MonoBehaviour, IServerListener
     void Update()
     {
         serverResponseListener();
+    }
+
+    public static void removeCharacter(string in_ID)
+    {
+        if (characterTracker.TryGetValue(in_ID, out NonPlayerController out_npc))
+        {
+            Destroy(out_npc.currentObject);
+            characterTracker.Remove(in_ID);
+        }
     }
 }

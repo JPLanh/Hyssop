@@ -148,6 +148,7 @@ var entity = new Schema({
 	maxStamina: {type: Number},
 	state: {type: String},	
 	currentAnimal: {type: String},
+	backpack: backpack,
 	primary_currentBlue : {type: Number},
 	primary_currentGreen : {type: Number},
 	primary_currentRed : {type: Number},
@@ -172,7 +173,7 @@ var entityExistance = new Schema({
 });
 
 var areaItem = new Schema({
-	itemObj: item,
+	entityObj: item,
 	areaObj: area,
 	position: position,
 	rotation: rotation
@@ -209,7 +210,7 @@ var storage = new Schema({
 })
 
 var itemExistance = new Schema({
-	binder: character,
+	binder: entity,
 	itemObj: item,
 	itemMarketObj: itemMarket,
 	storageObj: item,

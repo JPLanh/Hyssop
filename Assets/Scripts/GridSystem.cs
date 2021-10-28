@@ -83,10 +83,11 @@ public class GridSystem : MonoBehaviour
         generateIndexes();
     }
 
-    public void loadAreaItem(AreaItemDTO it_itemDTO)
+    public void loadAreaItem(EntityExistanceDTO<ItemDTO> it_itemDTO)
     {
-            GameObject temp_Obj = Instantiate(Resources.Load<GameObject>(it_itemDTO.itemObj.itemName), it_itemDTO.position, it_itemDTO.rotation);
-            temp_Obj.name = it_itemDTO._id;
+            GameObject temp_Obj = Instantiate(Resources.Load<GameObject>(it_itemDTO.entityObj.itemName), it_itemDTO.position, Quaternion.identity);
+            temp_Obj.transform.eulerAngles = new Vector2(it_itemDTO.rotation.x, it_itemDTO.rotation.y);
+        temp_Obj.name = it_itemDTO._id;
             temp_Obj.transform.SetParent(gameObjectList.transform);
             if (temp_Obj.TryGetComponent<ItemEntity>(out ItemEntity out_itemEntity))
             {

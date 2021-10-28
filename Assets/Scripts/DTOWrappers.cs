@@ -91,17 +91,32 @@ public class AreaIndexDTO
 }
 
 [Serializable]
-public class AreaItemDTO
+public class AreaItemDTO : ITransferer
 {
     public string _id;
-    public ItemDTO itemObj;
+    public ItemDTO entityObj;
     public Vector3 position;
     public Quaternion rotation;
     public AreaDTO areaObj;
+
+    public string getID()
+    {
+        return _id;
+    }
+
+    public Backpack getInventory()
+    {
+        throw new NotImplementedException();
+    }
+
+    public string getType()
+    {
+        return "Storage";
+    }
 }
 
 [Serializable]
-public class EntityExistanceDTO<T>
+public class EntityExistanceDTO<T> : ITransferer
 {
     public string _id;
     public T entityObj;
@@ -109,6 +124,54 @@ public class EntityExistanceDTO<T>
     public Vector3 rotation;
     public Area areaObj;
 
+    public string getID()
+    {
+        if (typeof(T) == typeof(EntityDTO))
+        {
+            return _id;
+        }
+        else if (typeof(T) == typeof(Entity))
+        {
+            return _id;
+        }
+        else if (typeof(T) == typeof(ItemDTO))
+        {
+            return (entityObj as ItemDTO)._id;
+        }
+        Debug.LogError("DTOWrapper ID is null");
+        return null;
+    }
+
+    public Backpack getInventory()
+    {
+        if (typeof(T) == typeof(EntityDTO))
+        {
+            return (entityObj as EntityDTO).backpack;
+        } else if (typeof(T) == typeof(Entity))
+        {
+            return (entityObj as Entity).backpack;
+        }
+        Debug.LogError("DTOWrapper Inventory is null");
+        return null;
+    }
+
+    public string getType()
+    {
+        if (typeof(T) == typeof(EntityDTO))
+        {
+            return "Entity";
+        }
+        else if (typeof(T) == typeof(Entity))
+        {
+            return "Entity";
+        }
+        if (typeof(T) == typeof(ItemDTO))
+        {
+            return "Storage";
+        }
+        Debug.LogError("DTOWrapper Type is null");
+        return null;
+    }
 }
 
 [Serializable]

@@ -109,7 +109,6 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
         //        transform.rotation = Network.loadedCharacter.rotation;
         playerVision.fpsRotation = Network.loadedCharacter.rotation;
         playerEntity = in_entity;
-        print("Rotation: " + Network.loadedCharacter.rotation);
         currentGrid.area.areaName = Network.loadedCharacter.areaObj.areaName;
 
 
@@ -195,10 +194,16 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
     public void saveAndDC()
     {
 
-        playerEntity.position = CustomUtilities.vector3Rounder(transform.position);
-        playerEntity.rotation = CustomUtilities.vector3Rounder(playerVision.fpsRotation);
+        //entityUpdater.position = transform.position;
+        //entityUpdater.rotation = playerVision.fpsRotation;
+        //updateBroadcastTimer = updateBroadcastInterval;
+        //entityUpdater.areaObj = currentGrid.area;
+        //Network.doUpdate(entityUpdater);
+
+        entityUpdater.position = CustomUtilities.vector3Rounder(transform.position);
+        entityUpdater.rotation = CustomUtilities.vector3Rounder(playerVision.fpsRotation);
+        entityUpdater.areaObj = currentGrid.area;
         //            playerEntity.rotation = Quaternion.identity;
-        playerEntity.areaName = currentGrid.area.areaName;
         if (!Network.isConnected)
         {
             DataUtility.saveEntityPlayer(playerEntity);
@@ -284,6 +289,7 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
                 entityUpdater.position = transform.position;
                 entityUpdater.rotation = playerVision.fpsRotation;
                 updateBroadcastTimer = updateBroadcastInterval;
+                entityUpdater.areaObj = currentGrid.area;
                 Network.doUpdate(entityUpdater);
 
             }
@@ -786,6 +792,7 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
             payload["x"] = in_x.ToString();
             payload["y"] = in_y.ToString();
             payload["z"] = in_z.ToString();
+            payload["_id"] = Network.loadedCharacter._id; 
             Network.sendPacket(doCommands.action, "Teleport", payload);
 //            Network.doLoad<gridIndexWrapper>("Area", newWrapper);
             return false;

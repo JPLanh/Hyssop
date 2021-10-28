@@ -2411,6 +2411,8 @@ MonoBehaviour:
   focusBackpack:
     size: 0
     indexSelected: 0
+  transfer_dialog_go: {fileID: 0}
+  canvas_go: {fileID: 0}
   menuState: 
 --- !u!114 &897445807
 MonoBehaviour:
@@ -2430,6 +2432,8 @@ MonoBehaviour:
   focusStorage: {fileID: 0}
   currentPlayer: {fileID: 0}
   menuState: 
+  transfer_dialog_go: {fileID: 0}
+  canvas_go: {fileID: 1814612829}
   newButton: {fileID: 1256742462653517370, guid: bae21a96c68600a4b8d3d2371537c2c5, type: 3}
 --- !u!1 &948559585
 GameObject:
@@ -3046,6 +3050,7 @@ MonoBehaviour:
   currentPlayer: {fileID: 774047115}
   timeSystem: {fileID: 1336090374}
   currentGrid: {fileID: 460980261}
+  npcList: {fileID: 251919643}
 --- !u!4 &1163023289
 Transform:
   m_ObjectHideFlags: 0
@@ -5365,6 +5370,8 @@ MonoBehaviour:
   focusBackpack:
     size: 0
     indexSelected: 0
+  transfer_dialog_go: {fileID: 0}
+  canvas_go: {fileID: 1814612829}
   menuState: 
 --- !u!1001 &9069840799139941115
 PrefabInstance:

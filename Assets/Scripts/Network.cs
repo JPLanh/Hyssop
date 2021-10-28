@@ -55,13 +55,14 @@ public class Network : MonoBehaviour
     public static Queue<Dictionary<string, string>> serverAcknowledge = new Queue<Dictionary<string, string>>();
     public static Queue<AreaDTO> areaConfig = new Queue<AreaDTO>();
     public static Queue<List<AreaIndexDTO>> listOfAreaIndexes = new Queue<List<AreaIndexDTO>>();
-    public static Queue<List<AreaItemDTO>> listOfAreaItems = new Queue<List<AreaItemDTO>>();
+    public static Queue<List<EntityExistanceDTO<ItemDTO>>> listOfAreaItems = new Queue<List<EntityExistanceDTO<ItemDTO>>>();
     public static Queue<List<EntityExistanceDTO<EntityDTO>>> listOfAreaNPCs = new Queue<List<EntityExistanceDTO<EntityDTO>>>();
     public static Queue<List<AreaPlantDTO>> listOfAreaPlants = new Queue<List<AreaPlantDTO>>();
     public static Queue<AreaPlantDTO> areaPlants = new Queue<AreaPlantDTO>();
     public static Queue<ItemExistanceDTOWrapper> itemRetrieved = new Queue<ItemExistanceDTOWrapper>();
+    public static Queue<List<EntityExistanceDTO<EntityDTO>>> listOfUpdatedPlayers = new Queue<List<EntityExistanceDTO<EntityDTO>>>();
 
-    public static bool debug = true;
+    public static bool debug = false;
 
     // Start is called before the first frame update
     void Start()
@@ -337,10 +338,9 @@ public class packetData
     public void processPacket()
     {
         data = data.Replace('`', '"');
-        if (Network.debug)
+        if (Network.debug && !type.Equals("Updates"))
         {
-            Debug.Log(type);
-            Debug.Log(data);
+            Debug.Log(type + ": " +data);
 
         }
 
@@ -380,7 +380,7 @@ public class packetData
                     processPacketHelper<List<AreaIndexDTO>>(Network.listOfAreaIndexes);
                     break;
                 case "Area Items":
-                    processPacketHelper<List<AreaItemDTO>>(Network.listOfAreaItems);
+                    processPacketHelper<List<EntityExistanceDTO<ItemDTO>>>(Network.listOfAreaItems);
                     break;
                 case "Area Plants":
                     processPacketHelper<List<AreaPlantDTO>>(Network.listOfAreaPlants);
@@ -394,6 +394,10 @@ public class packetData
                 case "Item":
                     processPacketHelper<ItemExistanceDTOWrapper>(Network.itemRetrieved);
                     break;
+                case "Updates":
+                    processPacketHelper<List<EntityExistanceDTO<EntityDTO>>>(Network.listOfUpdatedPlayers);
+                    break;
+
 
             }
         }

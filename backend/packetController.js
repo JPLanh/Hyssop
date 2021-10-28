@@ -152,7 +152,7 @@ async function processCharacter(in_socket, in_param)
 			})
 			.then(async (itemList) => {
 				itemList.forEach(async (it_itemList) => {
-					item.findByIdAndRemove(it_itemList.itemObj._id).exec();
+					item.findByIdAndRemove(it_itemList.entityObj._id).exec();
 				})
 			})
 			.then(async () => {
@@ -160,7 +160,7 @@ async function processCharacter(in_socket, in_param)
 			})
 			.then(async (itemList) => {
 				itemList.forEach(async (it_itemList) => {
-					item.findByIdAndRemove(it_itemList.itemObj._id).exec();
+					item.findByIdAndRemove(it_itemList.entityObj._id).exec();
 				})
 			})
 			.then(async () => {
@@ -213,9 +213,11 @@ async function processUpdate(in_socket, in_param)
 
 async function processPreload(in_socket, in_param){
 	newParam = {};
+	let data = JSON.parse(in_param["data"]);
 	switch(in_param["input"])
 	{
 		case "Generate farm":
+		//Need to fix this
 			area.findOne({"areaName": in_param["entity"] + "_farm", "worldObj.worldName": in_param["worldName"]})
 			.then(async (getFarm) => {
 				if (getFarm == null){
@@ -227,6 +229,8 @@ async function processPreload(in_socket, in_param){
 				} else return getFarm;
 			})
 			.then(async (getArea) =>{
+
+							in_socket.username = data["entityID"];
 //				newParam["action"] = "Farm generated";
 //				newParam["data"] = getArea; 
 				sendPacket(in_socket, "Area", getArea);
@@ -321,7 +325,7 @@ async function processAction(in_broadcast_socket, in_socket, in_param)
 		case "New day":
 			return serverController.newDay(in_broadcast_socket, in_param["worldName"]);
 		case "refill water":
-			return areaItem.findByIdAndUpdate(in_param["item"]["_id"], {"itemObj": in_param["item"]["itemObj"], "position": in_param["item"]["position"], "rotation": in_param["item"]["rotation"]}).exec();
+			return areaItem.findByIdAndUpdate(in_param["item"]["_id"], {"entityObj": in_param["item"]["entityObj"], "position": in_param["item"]["position"], "rotation": in_param["item"]["rotation"]}).exec();
 		case "Pick vegetation":
 			return await areaPlant.findOne({"index.areaObj.areaName": param["areaName"], "index.areaObj.worldObj.worldName": in_param["worldName"], "index.x": param["index"]["x"], "index.y": param["index"]["y"], "index.z": param["index"]["z"]}).exec()
 			.then(async (get_areaPlant) => {
@@ -356,6 +360,7 @@ async function processAction(in_broadcast_socket, in_socket, in_param)
 						param["y"] > 0 && param["y"] < getArea['width'] && 
 						param["z"] >= 0 && param["z"] < getArea['height'])
 					{
+ 						entityExistance.findByIdAndUpdate(param["_id"], {"areaObj": getArea, "position.x": param["x"], "position.y": param["y"], "position.z": param["z"]}).exec();
 						sendPacket(in_socket, "Area", getArea);
 					} else {
 						newParam["message"] = "Teleportation spot out of area field.";
@@ -452,8 +457,8 @@ async function trade(in_socket, in_param)
 					get_trade = itemExistance.findOne({"_id": mongoose.Types.ObjectId(param["item"]), "storageObj._id": mongoose.Types.ObjectId(param["fromName"])})
 					break;
 				case "Entity":
-					get_trade = itemExistance.findOne({"_id": mongoose.Types.ObjectId(param["item"]), "binder.entityName": param["fromName"]})
-					break;
+					// get_trade = itemExistance.findOne({"_id": mongoose.Types.ObjectId(param["item"]), "binder.entityName": param["fromName"]})
+					// break;
 				case "NPC":
 					get_trade = itemExistance.findOne({"_id": mongoose.Types.ObjectId(param["item"]), "binder._id": mongoose.Types.ObjectId(param["fromName"])})
 					break;
@@ -461,11 +466,11 @@ async function trade(in_socket, in_param)
 			let to_entity;
 			switch(param["toType"]){
 				case "Storage":
-					to_entity = areaItem.findOne({"itemObj._id": mongoose.Types.ObjectId(param["toName"])});
+					to_entity = areaItem.findOne({"entityObj._id": mongoose.Types.ObjectId(param["toName"])});
 					break;
 				case "Entity":
-					to_entity = character.findOne({"entityName": param["toName"]});
-					break;
+					// to_entity = character.findOne({"entityName": param["toName"]});
+					// break;
 				case "NPC":
 					to_entity = entityExistance.findOne({"entityObj._id": mongoose.Types.ObjectId(param["toName"])});
 					break;
@@ -475,11 +480,11 @@ async function trade(in_socket, in_param)
 			.then(async (res) =>{		
 				switch(param["toType"]){
 					case "Storage":
-						res.push(await itemExistance.findOne({"itemObj.itemName": res[0]["itemObj"]["itemName"], "storageObj._id": mongoose.Types.ObjectId(param["toName"])}).exec());
+						res.push(await itemExistance.findOne({"itemObj.itemName": res[0]["itemObj"]["itemName"], "storageObj._id": mongoose.Types.ObjectId(res[1]["entityObj"]["_id"])}).exec());
 						break;
 					case "Entity":
 					case "NPC":
-						res.push(await itemExistance.findOne({"itemObj.itemName": res[0]["itemObj"]["itemName"], "binder.entityName": param["toName"]}).exec());
+						res.push(await itemExistance.findOne({"itemObj.itemName": res[0]["itemObj"]["itemName"], "binder._id": mongoose.Types.ObjectId(res[1]["entityObj"]["_id"])}).exec());
 						break;
 				}
 				return res;
@@ -495,11 +500,11 @@ async function trade(in_socket, in_param)
 					temp_item.quantity = param["quantity"];
 					switch(param["toType"]){
 						case "Storage":
-							res.push(await new itemExistance({"itemObj": temp_item, "storageObj": res[1]["itemObj"]}).save());
+							res.push(await new itemExistance({"itemObj": temp_item, "storageObj": res[1]["entityObj"]}).save());
 						break;
 						case "Entity":
-							res.push(await new itemExistance({"itemObj": temp_item, "binder": res[1]}).save());
-							break;
+							// res.push(await new itemExistance({"entityObj": temp_item, "binder": res[1]}).save());
+							// break;
 						case "NPC":
 							res.push(await new itemExistance({"itemObj": temp_item, "binder": res[1]["entityObj"]}).save());
 							break;

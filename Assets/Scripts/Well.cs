@@ -15,20 +15,20 @@ public class Well : MonoBehaviour, IInteractable
     {
         if (!Network.isConnected)
         {
-            if (itemEntity.itemObj.capacity < itemEntity.itemObj.maxCapacity)
+            if (itemEntity.entityObj.capacity < itemEntity.entityObj.maxCapacity)
             {
                 counterTime += Time.deltaTime;
                 if (counterTime > 1)
                 {
-                    itemEntity.itemObj.durability += 5;
+                    itemEntity.entityObj.durability += 5;
                     counterTime = 0f;
                 }
-                if (itemEntity.itemObj.durability >= itemEntity.itemObj.maxDurability)
+                if (itemEntity.entityObj.durability >= itemEntity.entityObj.maxDurability)
                 {
-                    itemEntity.itemObj.capacity = itemEntity.itemObj.capacity + itemEntity.itemObj.quantity < itemEntity.itemObj.maxCapacity ?
-                        itemEntity.itemObj.capacity + itemEntity.itemObj.quantity :
-                        itemEntity.itemObj.maxCapacity;
-                    itemEntity.itemObj.durability = 0;
+                    itemEntity.entityObj.capacity = itemEntity.entityObj.capacity + itemEntity.entityObj.quantity < itemEntity.entityObj.maxCapacity ?
+                        itemEntity.entityObj.capacity + itemEntity.entityObj.quantity :
+                        itemEntity.entityObj.maxCapacity;
+                    itemEntity.entityObj.durability = 0;
                 }
             }
         }
