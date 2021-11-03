@@ -22,7 +22,10 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
 
     void OnApplicationQuit()
     {
-        Network.socket.Disconnect();
+        if (Network.socket != null)
+        {
+            Network.socket.Disconnect();
+        }
     }
 
     public IActionListener getActionListener()
@@ -111,7 +114,7 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
         createButton("Offline Back", "Back", new Vector3(-190f, -260f, 0f), objectList);
     }
 
-    private void createNewCharacter(string in_mode)
+    private void createNewCharacter(string in_mode, string in_type)
     {
         Entity playerEntity = new Entity();
         EntityExistanceDTO<Entity> temp_entity = new EntityExistanceDTO<Entity>();
@@ -119,7 +122,8 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
         playerEntity.entityName = out_name.inputValue.text;
         playerEntity.backpack.size = 8;
         playerEntity.state = "New";
-        playerEntity.areaName = out_name.inputValue.text + "_farm";
+        playerEntity.occupation = in_type;
+        playerEntity.areaName = out_name.inputValue.text + "_" + in_type;
 
         playerEntity.stamina = 100;
         playerEntity.maxStamina = 100;
@@ -212,6 +216,7 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
             Dictionary<string, string> payload = new Dictionary<string, string>();
             payload.Add("Username", Network.Username);
             payload.Add("EntityName", allChars[in_index].entityObj.entityName);
+            payload.Add("Occupation", allChars[in_index].entityObj.occupation);
             payload.Add("Action", "Delete");
             Network.doLogin(payload);
         }
@@ -294,7 +299,8 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
                 current_avatar.current_avatarEntity.setAllColor(new Color(current_avatar.secondary_currentRed / 255f, current_avatar.secondary_currentGreen / 255f, current_avatar.secondary_currentBlue / 255f), "Secondary");
 
                 createInputField("Character name", new Vector3(100f, 50f, 0f), objectList);
-                createButton("Online New " + in_index, "Create", new Vector3(0f, -260f, 0f), objectList);
+                createButton("Online New Farmer " + in_index, "Create Farmer", new Vector3(0f, -260f, 0f), objectList);
+                createButton("Online New Resturant " + in_index, "Create Resturant Owner", new Vector3(110f, -260f, 0f), objectList);
                 createLabel("Avatar", new Vector3(-35f, -15f, 0f), this);
                 createButton("Character Bear", "Bear", new Vector3(-70f, -50f, 0f), objectList);
                 createButton("Character Bunny", "Bunny", new Vector3(40f, -50f, 0f), objectList);
@@ -649,7 +655,7 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
                         break;
                     case "New":
                         allChars.Clear();
-                        createNewCharacter("Online");
+                        createNewCharacter("Online", parser[2]);
                         break;
                     case "Play":
                         loadCharacter("Online", int.Parse(parser[2]));
@@ -671,7 +677,7 @@ public class MainMenu : MonoBehaviour, IActionListener, IServerListener
                         loadMainMenu();
                         break;
                     case "New":
-                        createNewCharacter("Offline");
+                        createNewCharacter("Offline", parser[2]);
                         break;
                     case "Delete":
                         deleteCharacter("Offline", int.Parse(parser[2]));

@@ -33,7 +33,7 @@ module.exports = async function(socket){
 		await getSocket.on('Login', async (getPayload) => {
 			let param = JSON.parse(getPayload);
 			let payload = {};
-			console.log(param);
+//			console.log(param);
 
 			switch(param["Action"]){
 				case "Login":

@@ -5380,6 +5380,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 1255537080}
     m_Modifications:
+    - target: {fileID: 8315642906843628605, guid: 6a81a9b404ec3c5479f33e47a34ecb89, type: 3}
+      propertyPath: canvasUI
+      value: 
+      objectReference: {fileID: 1814612834}
     - target: {fileID: 9069840798726408925, guid: 6a81a9b404ec3c5479f33e47a34ecb89, type: 3}
       propertyPath: m_RootOrder
       value: 2
@@ -5436,6 +5440,10 @@ PrefabInstance:
       propertyPath: NPCList
       value: 
       objectReference: {fileID: 1700866135}
+    - target: {fileID: 9069840798726408926, guid: 6a81a9b404ec3c5479f33e47a34ecb89, type: 3}
+      propertyPath: canvasUI
+      value: 
+      objectReference: {fileID: 1814612834}
     - target: {fileID: 9069840798726408926, guid: 6a81a9b404ec3c5479f33e47a34ecb89, type: 3}
       propertyPath: itemList
       value: 

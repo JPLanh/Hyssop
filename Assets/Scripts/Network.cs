@@ -132,7 +132,6 @@ public class Network : MonoBehaviour
 
         socket.On("disconnect", () =>
         {
-            Debug.Log("Disconnectiong");
         });
 
         socket.On("Get Data", (getData) =>

@@ -148,6 +148,7 @@ var entity = new Schema({
 	maxStamina: {type: Number},
 	state: {type: String},	
 	currentAnimal: {type: String},
+	occupation: {type: String},
 	backpack: backpack,
 	primary_currentBlue : {type: Number},
 	primary_currentGreen : {type: Number},

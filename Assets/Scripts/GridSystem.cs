@@ -23,6 +23,7 @@ public class GridSystem : MonoBehaviour
     [SerializeField] private Transform itemList;
     [SerializeField] private Transform plantList;
     [SerializeField] private Transform NPCList;
+    [SerializeField] private CanvasHelper canvasUI;
 
 
     private int size = 1;
@@ -85,22 +86,43 @@ public class GridSystem : MonoBehaviour
 
     public void loadAreaItem(EntityExistanceDTO<ItemDTO> it_itemDTO)
     {
-            GameObject temp_Obj = Instantiate(Resources.Load<GameObject>(it_itemDTO.entityObj.itemName), it_itemDTO.position, Quaternion.identity);
-            temp_Obj.transform.eulerAngles = new Vector2(it_itemDTO.rotation.x, it_itemDTO.rotation.y);
+        GameObject temp_Obj = Instantiate(Resources.Load<GameObject>(it_itemDTO.entityObj.itemName), it_itemDTO.position, Quaternion.identity);
+        temp_Obj.transform.eulerAngles = new Vector2(it_itemDTO.rotation.x, it_itemDTO.rotation.y);
         temp_Obj.name = it_itemDTO._id;
-            temp_Obj.transform.SetParent(gameObjectList.transform);
-            if (temp_Obj.TryGetComponent<ItemEntity>(out ItemEntity out_itemEntity))
-            {
-                out_itemEntity.item = it_itemDTO;
-            }
-            if (temp_Obj.TryGetComponent<Bed>(out Bed out_bed))
-            {
-                out_bed.ts = ts;
-            }
-            if (temp_Obj.TryGetComponent<ITimeListener>(out ITimeListener out_timeListener))
-            {
-                DataCache.timeActionCache.Add(out_timeListener);
-            }
+        temp_Obj.transform.SetParent(gameObjectList.transform);
+        if (temp_Obj.TryGetComponent<ItemEntity>(out ItemEntity out_itemEntity))
+        {
+            out_itemEntity.item = it_itemDTO;
+        }
+        if (temp_Obj.TryGetComponent<Bed>(out Bed out_bed))
+        {
+            out_bed.ts = ts;
+        }
+        if (temp_Obj.TryGetComponent<ITimeListener>(out ITimeListener out_timeListener))
+        {
+            DataCache.timeActionCache.Add(out_timeListener);
+        }
+        if (temp_Obj.TryGetComponent<ICanvas>(out ICanvas out_canvas))
+        {
+            out_canvas.getCanvas(canvasUI);
+        }
+
+        if (temp_Obj.TryGetComponent<StorageEntity>(out StorageEntity out_storageEntity))
+        {
+            Dictionary<string, string> payload = new Dictionary<string, string>();
+            payload["storageID"] = it_itemDTO.entityObj._id;
+            Network.sendPacket(doCommands.storage, "Access", payload);
+            DataCache.addNewAreaItem(it_itemDTO, "Storage", temp_Obj);
+            print(it_itemDTO.entityObj._id + ": Storage");
+        }
+        if (temp_Obj.TryGetComponent<ChoppingBoard>(out ChoppingBoard out_choppingBoard))
+        {
+            Dictionary<string, string> payload = new Dictionary<string, string>();
+            payload["storageID"] = it_itemDTO.entityObj._id;
+            Network.sendPacket(doCommands.storage, "Access", payload);
+            DataCache.addNewAreaItem(it_itemDTO, "Chopping Board", temp_Obj);
+            print(it_itemDTO.entityObj._id + ": Chopping Board");
+        }
     }
 
     public void loadAreaNPC(EntityExistanceDTO<EntityDTO> it_dto)

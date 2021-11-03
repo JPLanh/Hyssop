@@ -36,7 +36,6 @@ public class Transder_Dialog : MonoBehaviour, IActionListener
         currentPlayer = in_player;
         itemName.text = item.ItemObj.itemName;
         itemQuantity.text = " / " + item.ItemObj.quantity;
-        print(item.ItemObj.itemName + " , " + item.ItemObj.quantity);
         itemQuantityIF.text = "1";
         slider.getAction = "Amount";
         slider.listener = this;
@@ -65,7 +64,6 @@ public class Transder_Dialog : MonoBehaviour, IActionListener
     public void listen(string getAction)
     {
         string[] parser = getAction.Split(' ');
-        print(getAction);
         switch (parser[0])
         {
             case "Amount":

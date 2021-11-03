@@ -71,6 +71,7 @@ public class LoadingScreen : MonoBehaviour, IServerListener
             //Network.doLoading("Check Farm");
             Dictionary<string, string> payload = new Dictionary<string, string>();
             payload["entityID"] = Network.loadedCharacter._id;
+            payload["occupation"] = Network.loadedCharacter.entityObj.occupation;
             Network.sendPacket(doCommands.preload, "Generate farm", payload);
             //print(Network.loadedCharacter._id);
             //print(Network.loadedCharacter.areaObj);

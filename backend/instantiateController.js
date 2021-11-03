@@ -115,34 +115,52 @@ async function generateFarmParameters(in_area)
     })
 }
 
-async function generateFarmItems(in_socket, in_name, in_area)
+async function generateFarmItems(in_socket, in_name, in_area, in_type)
 {
     return new Promise(async (resolve, reject) => {
 
-		instantiator.createNewAreaItem(in_socket, in_name, "Torch", 1, in_area, 18, 5.1, 7, 90, 0, 0, 0, null);	
-		await instantiator.createNewAreaItem(in_socket, in_name, "Basic Well", 2, in_area, 7, 0, 6, 0, 0, 0, 0, null)
-		.then(async (instWell) => {
-			instWell["entityObj.capacity"] = 50;
-			instWell["entityObj.maxCapacity"] = 100;
-			instWell.save();
-			serverController.refills.push(instWell);			
-		})
-		let instStorage = await instantiator.createNewAreaItem(in_socket, in_name, "Basic Shipping Bin", 0, in_area, 3, 0, 13, 0, 0, 0, 0, null)
-		let instMail = await instantiator.createNewAreaItem(in_socket, in_name, "Basic Mailbox", 0, in_area, 3, 0, 8, 0, 0, 0, 0, null)
-		instantiator.createNewAreaItem(in_socket, in_name, "Basic Bed", 0, in_area, 22, 0, 5, 0, 0, 0, 0, null);
-		instantiator.createNewAreaItem(in_socket, in_name, "Wooden Door", 0, in_area, 13, 1, 11, 0, 0, 0, 0, "Open");
+        if (in_type == "Farm"){
+            instantiator.createNewAreaItem(in_socket, in_name, "Torch", 1, in_area, 18, 5.1, 7, 90, 0, 0, 0, null); 
+            await instantiator.createNewAreaItem(in_socket, in_name, "Basic Well", 2, in_area, 7, 0, 6, 0, 0, 0, 0, null)
+            .then(async (instWell) => {
+                instWell["entityObj.capacity"] = 50;
+                instWell["entityObj.maxCapacity"] = 100;
+                instWell.save();
+                serverController.refills.push(instWell);            
+            })
+            let instStorage = await instantiator.createNewAreaItem(in_socket, in_name, "Basic Shipping Bin", 0, in_area, 3, 0, 13, 0, 0, 0, 0, null)
+            let instMail = await instantiator.createNewAreaItem(in_socket, in_name, "Basic Mailbox", 0, in_area, 3, 0, 8, 0, 0, 0, 0, null)
+            instantiator.createNewAreaItem(in_socket, in_name, "Basic Bed", 0, in_area, 22, 0, 5, 0, 0, 0, 0, null);
+            instantiator.createNewAreaItem(in_socket, in_name, "Wooden Door", 0, in_area, 13, 1, 11, 0, 0, 0, 0, "Open");
 
+            new cart({"fromObj": instStorage, "toObj": instMail}).save();
+            serverController.storages[instStorage] = instMail;            
+        } else if (in_type == "Resturant"){
+            instantiator.createNewAreaItem(in_socket, in_name, "Wooden Door", 0, in_area, 7, 1, 12, 0, 90, 0, 0, "Open");
+            instantiator.createNewAreaItem(in_socket, in_name, "Torch", 1, in_area, 12, 5.1, 23, 90, 0, 0, 0, null);
+            instantiator.createNewAreaItem(in_socket, in_name, "Torch", 1, in_area, 12, 5.1, 33, 90, 0, 0, 0, null); 
+            for(let wallIndex = 2 ; wallIndex < 24 ; wallIndex++){
+                if (wallIndex != 20 && wallIndex != 19){
+                    new areaIndex({"areaObj": in_area, "x": wallIndex, "y": 32, "z": 0, "objectName": "Wooden Wall", "destructable": false, "pickable": false, "state": ""}).save();
+                    new areaIndex({"areaObj": in_area, "x": wallIndex, "y": 32, "z": 1, "objectName": "Wooden Wall", "destructable": false, "pickable": false, "state": ""}).save();
+                }
+            }
 
+            new areaIndex({"areaObj": in_area, "x": 18, "y": 38, "z": 0, "objectName": "Wooden Wall", "destructable": false, "pickable": false, "state": ""}).save();
+//                    new areaIndex({"areaObj": in_area, "x": 18, "y": 38, "z": 1, "objectName": "Wooden Wall", "destructable": false, "pickable": false, "state": ""}).save();
 
-		new cart({"fromObj": instStorage, "toObj": instMail}).save();
-		serverController.storages[instStorage] = instMail;
+            await instantiator.createNewAreaItem(in_socket, in_name, "Wooden Chopping Board", 0, in_area, 18, 1, 38, 0, 0, 0, 0, null)
+            await instantiator.createNewAreaItem(in_socket, in_name, "Basic Fridge", 0, in_area, 23, 0, 38, 0, 90, 0, 0, null)
+            await instantiator.createNewAreaItem(in_socket, in_name, "Basic Fridge", 0, in_area, 23, 0, 35, 0, 90, 0, 0, null)
+
+        }
 
         resolve(await in_area);
 	})
 
 }
 
-async function generateFarmHouse(in_area, x_start, y_start, z_start, x_size, y_size, z_size)
+async function generateFarmHouse(in_area, x_start, y_start, z_start, x_size, y_size, z_size, in_type)
     {
         return await new Promise(async (resolve, reject) => {            
             for (let x = x_start; x <= x_start + x_size; x++)
@@ -151,26 +169,48 @@ async function generateFarmHouse(in_area, x_start, y_start, z_start, x_size, y_s
                 {
                     for (let z = z_start; z <= z_start + z_size; z++)
                     {
-                        let notAWall = false;
-                        if (x == x_start || x == x_start + x_size || y == y_start || y == y_start + y_size)
-                        {
-                        	if (x == x_start && (y == y_start + y_size - 2 || y == y_start + y_size - 3 ) && z < 3){
-                        		//create item
-                        		notAWall = true;
-                        	}                    	
-                        	if (!notAWall){                    		
-    								new areaIndex({"areaObj": in_area, "x": x, "y": y, "z": z, "objectName": "Wooden Wall", "destructable": false, "pickable": false, "state": ""}).save();
-                        	}
-                        }
-                        else
-                        {
+                        if (in_type == "Farm"){
+                            let notAWall = false;
+                            if (x == x_start || x == x_start + x_size || y == y_start || y == y_start + y_size)
+                            {
+                            	if (x == x_start && (y == y_start + y_size - 2 || y == y_start + y_size - 3 ) && z < 3){
+                            		//create item
+                            		notAWall = true;
+                            	}                    	
+                            	if (!notAWall){                    		
+        								new areaIndex({"areaObj": in_area, "x": x, "y": y, "z": z, "objectName": "Wooden Wall", "destructable": false, "pickable": false, "state": ""}).save();
+                            	}
+                            }
+                            else
+                            {
 
-                            //floor
-                            if (z == z_start)
-                            	new areaIndex({"areaObj": in_area, "x": x, "y": y, "z": 0, "objectName": "Wooden Floor", "destructable": false, "pickable": false, "state": ""}).save();
-                            if (z == z_start + z_size)
-                            	new areaIndex({"areaObj": in_area, "x": x, "y": y, "z": z, "objectName": "Wooden Wall", "destructable": false, "pickable": false, "state": ""}).save();
+                                //floor
+                                if (z == z_start)
+                                	new areaIndex({"areaObj": in_area, "x": x, "y": y, "z": 0, "objectName": "Wooden Floor", "destructable": false, "pickable": false, "state": ""}).save();
+                                if (z == z_start + z_size)
+                                	new areaIndex({"areaObj": in_area, "x": x, "y": y, "z": z, "objectName": "Wooden Wall", "destructable": false, "pickable": false, "state": ""}).save();
+                            }
+                        } else if (in_type == "Resturant"){
+                            let notAWall = false;
+                            if (x == x_start || x == x_start + x_size || y == y_start || y == y_start + y_size)
+                            {
+                                if ((x == x_start + 5 || x == x_start + 6) && y == y_start && z < 3){
+                                    //create item
+                                    notAWall = true;
+                                }                       
+                                if (!notAWall){                         
+                                        new areaIndex({"areaObj": in_area, "x": x, "y": y, "z": z, "objectName": "Wooden Wall", "destructable": false, "pickable": false, "state": ""}).save();
+                                }
+                            }
+                            else
+                            {
 
+                                //floor
+                                if (z == z_start)
+                                    new areaIndex({"areaObj": in_area, "x": x, "y": y, "z": 0, "objectName": "Wooden Floor", "destructable": false, "pickable": false, "state": ""}).save();
+                                if (z == z_start + z_size)
+                                    new areaIndex({"areaObj": in_area, "x": x, "y": y, "z": z, "objectName": "Wooden Wall", "destructable": false, "pickable": false, "state": ""}).save();
+                            }
                         }
                     }
                 }
@@ -189,6 +229,7 @@ exports.generateCentralHubNPC = async function(in_area)
     trevik["stamina"] = 100;
     trevik["maxStamina"] = 100;
     trevik["state"] = "";
+    trevik["occupation"] = "Shop Keeper";
     pos["position"] = new position({"x": 5, "y": 0, "z": 13});
     pos["rotation"] = new rotation({"x": 90, "y": 0, "z": 0, "w": 0});
     trevik["currentAnimal"] = "Fox";
@@ -221,6 +262,7 @@ exports.generateCentralHubNPC = async function(in_area)
         Izak['entityName'] = "Izak";
         Izak["stamina"] = 100;
         Izak["maxStamina"] = 100;
+        Izak["occupation"] = "Smithy";
         Izak["state"] = "";
         pos["position"] = new position({"x": 42, "y": 0, "z": 17});
         pos["rotation"] = new rotation({"x": 180, "y": 0, "z": 0, "w": 0});
@@ -434,17 +476,21 @@ async function generateCentralHub(in_socket, in_world){
     })
 }
 
-exports.generatePlayerFarm = async function(in_socket, in_world, in_name){
+exports.generatePlayerFarm = async function(in_socket, in_world, in_name, in_type){
 
-    return await instantiator.createNewGrid(25, 50, 10, in_name + "_farm", true, in_world)
+    return await instantiator.createNewGrid(25, 50, 10, in_name + "_" + in_type, true, in_world)
     .then(async (getArea) => {
         return await generateFarmParameters(getArea);
     })
     .then(async (getArea) => {
-        return await generateFarmHouse(getArea, 13, 2, 0, 11, 11, 5);
+        if (in_type == "Farm"){
+            return await generateFarmHouse(getArea, 13, 2, 0, 11, 11, 5, in_type);
+        } else if (in_type == "Resturant"){
+            return await generateFarmHouse(getArea, 1, 13, 0, 23, 36, 5, in_type);            
+        }
     })
     .then(async (getArea) => {
-        return await generateFarmItems(in_socket, in_name, getArea);
+        return await generateFarmItems(in_socket, in_name, getArea, in_type);
     })
     .then(async (getArea) => {
         await characterAccount.findOneAndUpdate({"entityObj.entityName": in_name}, {"areaObj": getArea}).exec()
@@ -454,7 +500,7 @@ exports.generatePlayerFarm = async function(in_socket, in_world, in_name){
             newParam["data"] = JSON.stringify(get_character).replace(/"/g, "`");
             in_socket.emit("Get Data", newParam);
         })
-        await areaItem.findOneAndUpdate({"entityObj.itemName": "Basic Well", "entityObj.binder": in_name + "_farm"}, {"entityObj.capacity": 50, "entityObj.maxCapacity": 100}, {upsert:true}).exec();
+        await areaItem.findOneAndUpdate({"entityObj.itemName": "Basic Well", "entityObj.binder": in_name + "_" + in_type}, {"entityObj.capacity": 50, "entityObj.maxCapacity": 100}, {upsert:true}).exec();
         return getArea;
     })
 }
@@ -547,6 +593,9 @@ exports.instantiateDatabase = async function()
         return await new itemDatabase({"itemName": "Small Watering Can","itemType": "Watering Can","maxDurability": 100,"maxCapacity": 10}).save()
     })
     .then(async () => {
+        return await new itemDatabase({"itemName": "Basic Fridge","itemType": "Fridge","maxDurability": 100,"maxCapacity": 20}).save()
+    })
+    .then(async () => {
         return await new itemDatabase({"itemName": "Basic Axe","itemType": "Axe","maxDurability": 100,"maxCapacity": 0}).save()
     })
     .then(async () => {
@@ -601,34 +650,43 @@ exports.instantiateDatabase = async function()
         return await new itemDatabase({"itemName": "Basic Mailbox","itemType": "Mailbox","maxDurability": 0,"maxCapacity": 0}).save()
     })
     .then(async () => {
-        return await new itemDatabase({"itemName": "Basic Shipping Bin","itemType": "Shipping Bin","maxDurability": 0,"maxCapacity": 0}).save()
+        return await new itemDatabase({"itemName": "Basic Shipping Bin","itemType": "Shipping Bin","maxDurability": 100,"maxCapacity": 0}).save()
     })
     .then(async () => {
-        return await new itemDatabase({"itemName": "Coffee cherry","itemType": "Produce","maxDurability": 0,"maxCapacity": 0}).save()
+        return await new itemDatabase({"itemName": "Wooden Chopping Board","itemType": "Chopping Board","maxDurability": 100,"maxCapacity": 0}).save()
     })
     .then(async () => {
-        return await new itemDatabase({"itemName": "Corn","itemType": "Produce","maxDurability": 0,"maxCapacity": 0}).save()
+        return await new itemDatabase({"itemName": "Coffee cherry","itemType": "Produce","maxDurability": 100,"maxCapacity": 0}).save()
     })
     .then(async () => {
-        return await new itemDatabase({"itemName": "Wheat","itemType": "Produce","maxDurability": 0,"maxCapacity": 0}).save()
+        return await new itemDatabase({"itemName": "Corn","itemType": "Produce","maxDurability": 100,"maxCapacity": 0}).save()
     })
     .then(async () => {
-        return await new itemDatabase({"itemName": "Carrot","itemType": "Produce","maxDurability": 0,"maxCapacity": 0}).save()
+        return await new itemDatabase({"itemName": "Wheat","itemType": "Produce","maxDurability": 100,"maxCapacity": 0}).save()
     })
     .then(async () => {
-        return await new itemDatabase({"itemName": "Potato","itemType": "Produce","maxDurability": 0,"maxCapacity": 0}).save()
+        return await new itemDatabase({"itemName": "Carrot","itemType": "Produce","maxDurability": 100,"maxCapacity": 0}).save()
     })
     .then(async () => {
-        return await new itemDatabase({"itemName": "Lettuce","itemType": "Produce","maxDurability": 0,"maxCapacity": 0}).save()
+        return await new itemDatabase({"itemName": "Potato","itemType": "Produce","maxDurability": 100,"maxCapacity": 0}).save()
     })
     .then(async () => {
-        return await new itemDatabase({"itemName": "Cabbage","itemType": "Produce","maxDurability": 0,"maxCapacity": 0}).save()
+        return await new itemDatabase({"itemName": "Lettuce","itemType": "Produce","maxDurability": 100,"maxCapacity": 0}).save()
     })
     .then(async () => {
-        return await new itemDatabase({"itemName": "Tomato","itemType": "Produce","maxDurability": 0,"maxCapacity": 0}).save()
+        return await new itemDatabase({"itemName": "Cabbage","itemType": "Produce","maxDurability": 100,"maxCapacity": 0}).save()
     })
     .then(async () => {
-        return await new itemDatabase({"itemName": "Onion","itemType": "Produce","maxDurability": 0,"maxCapacity": 0}).save()
+        return await new itemDatabase({"itemName": "Tomato","itemType": "Produce","maxDurability": 100,"maxCapacity": 0}).save()
+    })
+    .then(async () => {
+        return await new itemDatabase({"itemName": "Onion","itemType": "Produce","maxDurability": 100,"maxCapacity": 0}).save()
+    })
+    .then(async () => {
+        return await new itemDatabase({"itemName": "Thin Onion Slice","itemType": "Ingrediant","maxDurability": 100,"maxCapacity": 0}).save()
+    })
+    .then(async () => {
+        return await new itemDatabase({"itemName": "Thick Onion Slice","itemType": "Ingrediant","maxDurability": 100,"maxCapacity": 0}).save()
     })
     .then(async () => {
         return await new itemDatabase({"itemName": "Green Onion","itemType": "Produce","maxDurability": 0,"maxCapacity": 0}).save()

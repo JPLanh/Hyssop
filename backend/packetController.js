@@ -142,10 +142,10 @@ async function processCharacter(in_socket, in_param)
 		case "Delete":
 			await character.deleteOne({"account": param["Username"], "entityName": param["EntityName"]}).exec()
 			.then(async () => {
-				await area.deleteMany({"areaName": param["EntityName"] + "_farm"}).exec()
+				await area.deleteMany({"areaName": param["EntityName"] + "_" + param["Occupation"]}).exec()
 			})
 			.then(async () => {
-				await areaIndex.deleteMany({"areaName": param["EntityName"] + "_farm"}).exec()
+				await areaIndex.deleteMany({"areaName": param["EntityName"] + "_" + param["Occupation"]})
 			})
 			.then(async () => {
 				return await itemExistance.find({"binder.entityName": param["EntityName"]}).exec()
@@ -156,7 +156,7 @@ async function processCharacter(in_socket, in_param)
 				})
 			})
 			.then(async () => {
-				return await itemExistance.find({"binder.entityName": param["EntityName"] + "_farm"}).exec()
+				return await itemExistance.find({"binder.entityName": param["EntityName"] + "_" + param["Occupation"]}).exec()
 			})
 			.then(async (itemList) => {
 				itemList.forEach(async (it_itemList) => {
@@ -167,10 +167,10 @@ async function processCharacter(in_socket, in_param)
 				await itemExistance.deleteMany({"binder.entityName": param["EntityName"]}).exec()
 			})
 			.then(async () => {
-				await areaItem.deleteMany({"areaObj.areaName": param["EntityName"] + "_farm"}).exec()
+				await areaItem.deleteMany({"areaObj.areaName": param["EntityName"] + "_" + param["Occupation"]}).exec()
 			})
 			.then(async () => {
-				await areaPlant.deleteMany({"index.areaName": param["EntityName"] + "_farm"}).exec()
+				await areaPlant.deleteMany({"index.areaName": param["EntityName"] + "_" + param["Occupation"]}).exec()
 			})
 			.then(async () => {						
 				return await character.find({"account": param["Username"]}).exec()	
@@ -214,17 +214,18 @@ async function processUpdate(in_socket, in_param)
 async function processPreload(in_socket, in_param){
 	newParam = {};
 	let data = JSON.parse(in_param["data"]);
+//	console.log(in_param);
 	switch(in_param["input"])
 	{
 		case "Generate farm":
 		//Need to fix this
-			area.findOne({"areaName": in_param["entity"] + "_farm", "worldObj.worldName": in_param["worldName"]})
+			area.findOne({"areaName": in_param["entity"] + "_" + data["occupation"], "worldObj.worldName": in_param["worldName"]})
 			.then(async (getFarm) => {
 				if (getFarm == null){
-					console.log("Farm generated");
+					console.log(data["occupation"] + " generated");
 					return await world.findOne({"worldName": in_param["worldName"]}).exec()
 					.then(async (get_world) =>{
-						return await instantiator.generatePlayerFarm(in_socket, get_world, in_param["entity"]);
+						return await instantiator.generatePlayerFarm(in_socket, get_world, in_param["entity"], data["occupation"]);
 					})
 				} else return getFarm;
 			})
@@ -380,11 +381,14 @@ async function processAction(in_broadcast_socket, in_socket, in_param)
 async function processItem(in_socket, in_param)
 {
 	let param = JSON.parse(in_param["data"]);
-	// console.log(param);
+//	 console.log(param);
 	switch(in_param["input"])
 	{
 		case "Save":		
  			itemExistance.findByIdAndUpdate(param["_id"], {"itemObj": param["ItemObj"]}).exec();
+ 			break;
+		case "Remove":
+ 			itemExistance.findByIdAndRemove(param["_id"]).exec();
  			break;
 	}
 }
@@ -399,6 +403,7 @@ async function processPlayerItem(in_socket, in_param)
 		    .then(async (item_found) => {
 		        if (item_found) {
 		            item_found["itemObj"]["quantity"] += parseInt(in_param["quantity"]);
+					sendPacket(in_socket, "Item", item_found);
 		            if (item_found["itemObj"]["quantity"] <= 0){
 		                item_found.remove();
 		            } else {
@@ -434,16 +439,48 @@ async function processArea(in_socket, in_param)
 }
 async function processStorage(in_socket, in_param)
 {
+    let data = JSON.parse(in_param["data"]);
+    console.log(data);
 	switch(in_param["input"])
 	{
 		case "Access":
-		    let param = JSON.parse(in_param["data"]);
-			return await itemExistance.find({"storageObj._id": mongoose.Types.ObjectId(param["storageID"])}).exec()
+			return await itemExistance.find({"storageObj._id": mongoose.Types.ObjectId(data["storageID"])}).exec()
 			.then(async (getStorage) => {
 				sendPacket(in_socket, "Storage", getStorage);
 //				await dataController.sendListData(in_socket, 2, getStorage, "storageList", "Load storage access", "Load all storage item", "All world loaded complete");	
 			})
 		break;
+		case "Pickup":
+		    let newParam = {};		
+		    await itemExistance.findOne({"storageObj._id": mongoose.Types.ObjectId(data["storage"]), "itemObj.itemName": data["item"]}).exec()
+		    .then(async (item_found) => {
+		        if (item_found) {
+		            item_found["itemObj"]["quantity"] += parseInt(data["quantity"]);
+					sendPacket(in_socket, "Item", item_found);
+		            if (item_found["itemObj"]["quantity"] <= 0){
+		                item_found.remove();
+		            } else {
+		                item_found.save();
+		            }
+		        } else {
+//		            let getCharacter = characterAccount.findOne({"entityObj.entityName": in_param["entity"]}).exec()
+		            let getAreaItem = areaItem.findOne({"entityObj._id": mongoose.Types.ObjectId(data["storage"])}).exec()
+		            let getItem = serverController.itemsDB[data["item"]]//itemDatabase.findOne({"itemName": in_param["item"]}).exec()
+		            await Promise.all([getAreaItem, getItem])
+		            .then(async (res) => {
+		                newParam["Action"] = "New item";
+		                return await new item({"itemName": res[1]["itemName"], "itemType": res[1]["itemType"], maxDurability: res[1]["maxDurability"], durability: res[1]["maxDurability"], capacity: 0, maxCapacity: res[1]["maxCapacity"], quantity: data["quantity"]}).save()
+		                .then(async (newItem) => {
+		                    newParam["Item"] = newItem;             
+		                    return await new itemExistance({"storageObj": res[0]["entityObj"], "itemObj": newItem}).save()
+		                })
+		                .then(async (newItem) =>{
+							sendPacket(in_socket, "Item", newItem);
+		                })
+		            })
+		        }
+		    })
+			break;
 	}
 }
 

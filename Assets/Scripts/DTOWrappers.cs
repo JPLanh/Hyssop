@@ -75,6 +75,56 @@ public class WorldDTO
 
 
 [Serializable]
+public class EntityDTO
+{
+    public string _id;
+    public string entityName;
+    public Vector3 position;
+    public Vector3 rotation;
+    public string areaName;
+    public Backpack backpack = new Backpack();
+    public string occupation;
+    public int stamina;
+    public int maxStamina;
+    public string state;
+    public string holding;
+    public string currentAnimal;
+    public float primary_currentRed;
+    public float primary_currentGreen;
+    public float primary_currentBlue;
+    public float secondary_currentRed;
+    public float secondary_currentGreen;
+    public float secondary_currentBlue;
+    [System.NonSerialized]
+    public Int64 time;
+
+    public Entity getActual()
+    {
+        Entity temp_entity = new Entity();
+        temp_entity._id = _id;
+        temp_entity.entityName = entityName;
+        temp_entity.position = position;
+        temp_entity.rotation = rotation;
+        temp_entity.areaName = areaName;
+        temp_entity.backpack = backpack;
+        temp_entity.occupation = occupation;
+        temp_entity.stamina = stamina;
+        temp_entity.maxStamina = maxStamina;
+        temp_entity.state = state;
+        temp_entity.holding = holding;
+        temp_entity.time = time;
+        temp_entity.currentAnimal = currentAnimal;
+        temp_entity.primary_currentBlue = primary_currentBlue;
+        temp_entity.primary_currentGreen = primary_currentGreen;
+        temp_entity.primary_currentRed = primary_currentRed;
+        temp_entity.secondary_currentBlue = secondary_currentBlue;
+        temp_entity.secondary_currentGreen = secondary_currentGreen;
+        temp_entity.secondary_currentRed = secondary_currentRed;
+        return temp_entity;
+    }
+}
+
+[Serializable]
 public class AreaIndexDTO
 {
     public AreaDTO areaObj;

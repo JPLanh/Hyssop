@@ -88,12 +88,11 @@ public class Backpack
         return addItem(getItem);
     }
 
-    private bool addItem(ItemExistanceDTOWrapper in_item)
+    public bool addItem(ItemExistanceDTOWrapper in_item)
     {
         ItemExistanceDTOWrapper out_item = items.Find(x => x.ItemObj.itemName.Equals(in_item.ItemObj.itemName));
         if (out_item != null)
         {
-            Debug.Log(out_item.ItemObj.quantity + " , " + in_item.ItemObj.quantity);
             out_item.ItemObj.quantity += in_item.ItemObj.quantity;
             return true;
         }
@@ -109,7 +108,30 @@ public class Backpack
                 return false;
             }
         }
+    }
 
+    public bool refreshItem(ItemExistanceDTOWrapper in_item)
+    {
+        ItemExistanceDTOWrapper out_item = items.Find(x => x.ItemObj.itemName.Equals(in_item.ItemObj.itemName));
+        if (out_item != null)
+        {
+            Debug.Log("Backpack: " + out_item.ItemObj.itemName + " , " + out_item.ItemObj.quantity);
+            out_item.ItemObj.quantity = in_item.ItemObj.quantity;
+            if (in_item.ItemObj.quantity <= 0) items.Remove(out_item);
+            return true;
+        }
+        else
+        {
+            if (items.Count < size)
+            {
+                items.Add(in_item);
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
     }
 
     public bool modifyItem(ItemExistanceDTOWrapper in_item, int in_quantity)

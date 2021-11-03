@@ -2,7 +2,7 @@ using UnityEngine;
 using System.Collections.Generic;
 using Newtonsoft.Json;
 
-public class TradeMenu : MonoBehaviour, IActionListener, IServerListener
+public class TradeMenu : MonoBehaviour, IActionListener
 {
     public GameObject currentMenu;
     public GameObject leftObjectList;
@@ -27,7 +27,7 @@ public class TradeMenu : MonoBehaviour, IActionListener, IServerListener
     // Update is called once per frame
     void Update()
     {
-        if (gameObject.activeInHierarchy) serverResponseListener();
+//        if (gameObject.activeInHierarchy) serverResponseListener();
         if (Input.GetButtonDown("Modifier")) modifier = true;
         if (Input.GetButtonUp("Modifier")) modifier = false;
     }
@@ -51,7 +51,8 @@ public class TradeMenu : MonoBehaviour, IActionListener, IServerListener
         {
             case "Start":
                 loadPanel("Left", currentPlayer.playerEntity.backpack);
-                if (!Network.isConnected) loadPanel("Right", focusStorage.storage.inventory);
+                //if (!Network.isConnected) 
+                    loadPanel("Right", focusStorage.storage.inventory);
                 break;
         }
     }
@@ -272,12 +273,15 @@ public class TradeMenu : MonoBehaviour, IActionListener, IServerListener
     }
     private void tradeSelected(ItemExistanceDTOWrapper in_item, ITransferer in_from, ITransferer in_to)
     {
-        transfer_dialog_go = Instantiate(Resources.Load<GameObject>("Transfer_amt_dialog"), new Vector3(0f, 0f, 0f), Quaternion.identity);
-        transfer_dialog_go.transform.SetParent(canvas_go.transform);
-        transfer_dialog_go.transform.localPosition = new Vector3(0f, 0f, 0f);
-        if (transfer_dialog_go.TryGetComponent<Transder_Dialog>(out Transder_Dialog out_transfer_dialog))
+        if (transfer_dialog_go == null)
         {
-            out_transfer_dialog.transferLoad(in_item, in_from, in_to, currentPlayer, "Transfer");
+            transfer_dialog_go = Instantiate(Resources.Load<GameObject>("Transfer_amt_dialog"), new Vector3(0f, 0f, 0f), Quaternion.identity);
+            transfer_dialog_go.transform.SetParent(canvas_go.transform);
+            transfer_dialog_go.transform.localPosition = new Vector3(0f, 0f, 0f);
+            if (transfer_dialog_go.TryGetComponent<Transder_Dialog>(out Transder_Dialog out_transfer_dialog))
+            {
+                out_transfer_dialog.transferLoad(in_item, in_from, in_to, currentPlayer, "Transfer");
+            }
         }
     }
 }

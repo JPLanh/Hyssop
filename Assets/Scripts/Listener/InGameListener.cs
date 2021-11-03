@@ -27,6 +27,7 @@ public class InGameListener : MonoBehaviour, IServerListener
         if (Network.areaConfig.Count > 0)
         {
             currentPlayer.teleportToDestination();
+            DataCache.resetAll();
 
             currentPlayer.isLoading(true, "Loading teh area you're in", 0);
 
@@ -94,7 +95,7 @@ public class InGameListener : MonoBehaviour, IServerListener
             foreach (EntityExistanceDTO<EntityDTO> it_areaNpc in get_list)
             {
                 currentPlayer.isLoading(true, "Loading everywun", (((float)count) / ((float)get_list.Count) * 100));
-//                currentGrid.loadAreaNPC(it_areaNpc);
+                //                currentGrid.loadAreaNPC(it_areaNpc);
                 count++;
             }
             currentPlayer.isLoading(false);
@@ -131,53 +132,8 @@ public class InGameListener : MonoBehaviour, IServerListener
                 case "Error":
                     currentPlayer.toastNotifications.newNotification(getResponse["message"]);
                     break;
-            }  
+            }
         }
-
-//        if (Network.characterNetworkUpdate.Count > 0)
-//        {
-//            characterListWrapper characterWrapper = Network.characterNetworkUpdate.Dequeue();
-//            Network.characterNetworkUpdate.Clear();
-//            if (characterWrapper != null && characterWrapper.characterList != null)
-//            {
-//                foreach (EntityDTO it_entity in characterWrapper.characterList)
-//                {
-//                    if (!it_entity.entityName.Equals(Network.loadedCharacter.entityObj.entityName))
-//                    {
-//                        if (it_entity.areaName.Equals(currentGrid.area.areaName))
-//                        {
-//                            it_entity.time = characterWrapper.time;
-//                            if (InGameListener.characterTracker.TryGetValue(it_entity.entityName, out NonPlayerController out_npc))
-//                            {
-//                                {
-////                                    out_npc.playerEntity = it_entity.getActual();
-//                                }
-//                            }
-//                            else
-//                            {
-//                                GameObject temp_object = Instantiate(Resources.Load<GameObject>("NPC"), it_entity.position, Quaternion.identity);
-//                                if (temp_object.TryGetComponent<NonPlayerController>(out NonPlayerController out_NPC))
-//                                {
-////                                    out_NPC.playerEntity = it_entity.getActual();
-//                                    out_NPC.currentObject = temp_object;
-//                                    InGameListener.characterTracker.Add(it_entity.entityName, out_NPC);
-//                                }
-//                            }
-//                        }
-//                        else
-//                        {
-//                            if (InGameListener.characterTracker.TryGetValue(it_entity.entityName, out NonPlayerController out_npc))
-//                            {
-//                                {
-//                                    Destroy(out_npc.currentObject);
-//                                    Destroy(out_npc.gameObject);
-//                                }
-//                            }
-//                        }
-//                    }
-//                }
-//            }
-//        }
 
         JsonSerializerSettings settings = new JsonSerializerSettings();
         settings.ReferenceLoopHandling = ReferenceLoopHandling.Ignore;
@@ -213,18 +169,53 @@ public class InGameListener : MonoBehaviour, IServerListener
             }
         }
 
-        if (!currentPlayer.canvas.tradeMenu.gameObject.activeInHierarchy)
+        if (Network.listOfItems.Count > 0)
         {
-            if (Network.itemRetrieved.Count > 0)
+            List<ItemExistanceDTOWrapper> temp_wrapper = Network.listOfItems.Dequeue();
+            if (temp_wrapper.Count > 0)
             {
-                ItemExistanceDTOWrapper getItem = Network.itemRetrieved.Dequeue();
+                DataCache.getAreaItemByID(temp_wrapper[0].storageObj._id, out GameObject out_access_go, out string out_access_itemType);
+                print(out_access_itemType);
+                switch (out_access_itemType)
+                {
+                    case "Storage":
+                        //                    print(it_item.storageObj._id + ": load " + out_itemType + " " + it_item.ItemObj._id);
+                        out_access_go.TryGetComponent<StorageEntity>(out StorageEntity out_storage);
+                        //                        out_storage.storage.inventory.createItem(it_item);
+                        out_storage.storage.inventory.items = temp_wrapper;
+                        //                    out_storage.storage.inventory.items.Add(it_item);
+                        break;
+                    case "Chopping Board":
+                        //                    print(it_item.storageObj._id + ": load " + out_itemType + " " + it_item.ItemObj._id);
+                        out_access_go.TryGetComponent<ChoppingBoard>(out ChoppingBoard out_choppingBoard);
+                        out_choppingBoard.storage.inventory.items = temp_wrapper;
+                        //                    out_choppingBoard.onBoard = it_item;
+                        break;
+                }
+            }
+            //foreach (ItemExistanceDTOWrapper it_item in temp_wrapper)
+            //{
+            //    DataCache.getAreaItemByID(it_item.storageObj._id, out GameObject out_go, out string out_itemType);
+            //}
+        }
+
+        //if (!currentPlayer.canvas.tradeMenu.gameObject.activeInHierarchy)
+        //{
+        if (Network.itemRetrieved.Count > 0)
+        {
+            ItemExistanceDTOWrapper getItem = Network.itemRetrieved.Peek();
+            print("inGameListener-ServerResponse: " + getItem.ItemObj.itemName);
+            if (getItem.binder != null)
+            {
+                getItem = Network.itemRetrieved.Dequeue();
+                print("InGameListener : itemRetrieved] - " + currentPlayer.playerEntity.entityName + " , " + getItem.binder.entityName);
                 if (currentPlayer.playerEntity.entityName.Equals(getItem.binder.entityName))
                 {
                     //                    currentPlayer.playerEntity.backpack.createItem(getItem);
 
                     ItemExistanceDTOWrapper has_item = currentPlayer.playerEntity.backpack.items.Find(x => x.ItemObj.itemName == getItem.ItemObj.itemName);
-                    print(JsonConvert.SerializeObject(has_item, settings));
-                    print(JsonConvert.SerializeObject(getItem, settings));
+                    //print(JsonConvert.SerializeObject(has_item, settings));
+                    //print(JsonConvert.SerializeObject(getItem, settings));
                     if (has_item != null)
                     {
 
@@ -241,10 +232,42 @@ public class InGameListener : MonoBehaviour, IServerListener
                     {
                         currentPlayer.playerEntity.backpack.items.Add(getItem);
                     }
+                    if (currentPlayer.canvas.tradeMenu.gameObject.activeInHierarchy)
+                    {
+                        currentPlayer.canvas.tradeMenu.init();
+                    }
+                }
+            }
+            else if (getItem.storageObj != null)
+            {
+                getItem = Network.itemRetrieved.Dequeue();
+                DataCache.getAreaItemByID(getItem.storageObj._id, out GameObject out_go, out string out_itemType);
+                switch (out_itemType)
+                {
+                    case "Storage":
+                        out_go.TryGetComponent<StorageEntity>(out StorageEntity out_storage);
+                        out_storage.storage.inventory.refreshItem(getItem);
+                        if (currentPlayer.canvas.tradeMenu.focusStorage.itemEntity.item.entityObj._id.Equals(getItem.storageObj._id))
+                        {
+                            currentPlayer.canvas.tradeMenu.init();
+                        }
+                        break;
+                    case "Chopping Board":
+                        out_go.TryGetComponent<ChoppingBoard>(out ChoppingBoard out_choppingBoard);
+                        out_choppingBoard.storage.inventory.refreshItem(getItem);
 
+                        if (out_choppingBoard.choppingStatusUI != null && out_choppingBoard.itemEntity.item.entityObj._id.Equals(getItem.storageObj._id))
+                        {
+                            if (out_choppingBoard.choppingStatusUI.TryGetComponent<chopStatus>(out chopStatus out_chop))
+                            {
+                                out_chop.init();
+                            }
+                        }
+                        break;
                 }
             }
         }
+        //}
     }
 
     public void resetState()

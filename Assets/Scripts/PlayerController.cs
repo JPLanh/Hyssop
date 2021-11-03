@@ -42,7 +42,7 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
 
     public GameObject indexSelector;
 
-    private bool debug = false;
+    private bool debug = true;
     private float updateBroadcastTimer = 0;
     private float updateBroadcastInterval = .05f;
 
@@ -147,6 +147,7 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
             playerEntity.backpack.createItem(name, "Basic Pickaxe", 1);
             playerEntity.backpack.createItem(name, "Small Watering Can", 1);
             playerEntity.backpack.createItem(name, "Coffee bean", 10);
+            playerEntity.backpack.createItem(name, "Onion", 10);
             playerEntity.backpack.createItem(name, "Silver", 100);
             holdingText.text = "Nothing";
         }
@@ -239,7 +240,7 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
                 if (playerVision.focusPoint != Vector3.zero) GUI.Label(new Rect(10, 120, 300, 20), "Looking At: " + playerVision.focusPoint.x + " , " + playerVision.focusPoint.z + " , " + playerVision.focusPoint.y);
                 if (playerVision.focusPoint != Vector3.zero && playerVision.getGridIndex() != null) GUI.Label(new Rect(10, 140, 300, 20), "Index Select: " + playerVision.getGridIndex().x + " , " + playerVision.getGridIndex().y + " , " + playerVision.getGridIndex().z);
                 GUI.Label(new Rect(10, 160, 300, 20), currentGrid.area.areaName + " _ Time: " + ts.currentWorld.time);
-                if (playerEntity.holding != null)
+                if (playerEntity.getHolding() != null)
                 {
                     if (playerEntity.getHolding().ItemObj.itemName != null)
                     {
@@ -430,10 +431,18 @@ public class PlayerController : MonoBehaviour, IActionListener, IDayNightCycle
 
 
         }
-        if (Input.GetButtonDown("Cancel"))
-        {
-            accessMenu();
-        }
+        //if (Input.GetButtonDown("Cancel"))
+        //{
+        //    switch (playerEntity.state)
+        //    {
+        //        case "Chopping":                    
+        //            break;
+        //        default:
+        //            accessMenu();
+        //            break;
+        //    }
+        //    Cursor.lockState = CursorLockMode.Locked;
+        //}
 
         if (Input.GetButtonDown("Menu"))
         {

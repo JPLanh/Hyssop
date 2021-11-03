@@ -307,7 +307,7 @@ public class PlayerMenu : MonoBehaviour, IActionListener, IServerListener
                 createButton("Exit Menu", "Exit Menu", false).transform.localPosition = new Vector3(0f, -170f, 0f);
                 break;
             case "Generate Item":
-                createButton("Wooden Fence", "Create Wooden Fence", false).transform.localPosition = new Vector3(-75f, 170f - (35f * 0), 0f);
+                createButton("Onion", "Create Onion", false).transform.localPosition = new Vector3(-75f, 170f - (35f * 0), 0f);
                 createButton("Wooden Floor", "Create Wooden Floor", false).transform.localPosition = new Vector3(-75f, 170f - (35f * 1), 0f);
                 createButton("Wooden Slab", "Create Wooden Slab", false).transform.localPosition = new Vector3(-75f, 170f - (35f * 2), 0f);
                 createButton("Wooden Stair", "Create Wooden Stair", false).transform.localPosition = new Vector3(-75f, 170f - (35f * 3), 0f);

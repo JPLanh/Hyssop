@@ -4,13 +4,16 @@ using UnityEngine;
 
 /**
  * 
- * Local Configuration
- * 
- * Holds data for local client and single play
+ * Cache that holds game object to reduce the usage of GameObject.find();
  * 
  */
 public class DataCache : MonoBehaviour
 {
+    private static Dictionary<string, GameObject> areaItems = new Dictionary<string, GameObject>();
+    private static Dictionary<string, GameObject> areaStorage = new Dictionary<string, GameObject>();
+    private static Dictionary<string, GameObject> areaChoppingBoard = new Dictionary<string, GameObject>();
+
+    //Local stuff
 
     public static Dictionary<string, Plant> plantCache = new Dictionary<string, Plant>();
     public static Dictionary<string, Item> itemCache = new Dictionary<string, Item>();
@@ -29,6 +32,43 @@ public class DataCache : MonoBehaviour
     public static localConfig localConfig;
 
     public static Entity loadedCharacter;
+
+    public static void addNewAreaItem(EntityExistanceDTO<ItemDTO> in_item, string item_type, GameObject in_go)
+    {
+        switch (item_type)
+        {
+            case "Storage":
+                areaStorage.Add(in_item.entityObj._id, in_go);
+                break;
+            case "Chopping Board":
+                areaChoppingBoard.Add(in_item.entityObj._id, in_go);
+                break;
+            default:
+                areaItems.Add(in_item._id, in_go);
+                break;
+        }
+
+    }
+
+    public static void getAreaItemByID(string in_id, out GameObject out_go, out string out_itemType)
+    {
+        areaItems.TryGetValue(in_id, out out_go);
+        out_itemType = "Area Item";
+        if (out_go == null)
+        {
+            areaStorage.TryGetValue(in_id, out out_go);
+            out_itemType = "Storage";
+        }
+        if (out_go == null)
+        {
+            areaChoppingBoard.TryGetValue(in_id, out out_go);
+            out_itemType = "Chopping Board";
+        }
+    }
+    public static void resetAll()
+    {
+        areaItems.Clear();
+    }
     // Start is called before the first frame update
     void Start()
     {
