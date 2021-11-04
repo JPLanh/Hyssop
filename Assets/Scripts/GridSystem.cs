@@ -123,6 +123,14 @@ public class GridSystem : MonoBehaviour
             DataCache.addNewAreaItem(it_itemDTO, "Chopping Board", temp_Obj);
             print(it_itemDTO.entityObj._id + ": Chopping Board");
         }
+        if (temp_Obj.TryGetComponent<cookingPot>(out cookingPot out_cookingPot))
+        {
+            Dictionary<string, string> payload = new Dictionary<string, string>();
+            payload["storageID"] = it_itemDTO.entityObj._id;
+            Network.sendPacket(doCommands.storage, "Access", payload);
+            DataCache.addNewAreaItem(it_itemDTO, "Cooking Pot", temp_Obj);
+            print(it_itemDTO.entityObj._id + ": Cooking Pot");
+        }
     }
 
     public void loadAreaNPC(EntityExistanceDTO<EntityDTO> it_dto)

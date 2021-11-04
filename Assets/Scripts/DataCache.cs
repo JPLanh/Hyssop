@@ -12,6 +12,7 @@ public class DataCache : MonoBehaviour
     private static Dictionary<string, GameObject> areaItems = new Dictionary<string, GameObject>();
     private static Dictionary<string, GameObject> areaStorage = new Dictionary<string, GameObject>();
     private static Dictionary<string, GameObject> areaChoppingBoard = new Dictionary<string, GameObject>();
+    private static Dictionary<string, GameObject> areaCookingPot = new Dictionary<string, GameObject>();
 
     //Local stuff
 
@@ -43,6 +44,9 @@ public class DataCache : MonoBehaviour
             case "Chopping Board":
                 areaChoppingBoard.Add(in_item.entityObj._id, in_go);
                 break;
+            case "Cooking Pot":
+                areaCookingPot.Add(in_item.entityObj._id, in_go);
+                break;
             default:
                 areaItems.Add(in_item._id, in_go);
                 break;
@@ -63,6 +67,11 @@ public class DataCache : MonoBehaviour
         {
             areaChoppingBoard.TryGetValue(in_id, out out_go);
             out_itemType = "Chopping Board";
+        }
+        if (out_go == null)
+        {
+            areaCookingPot.TryGetValue(in_id, out out_go);
+            out_itemType = "Cooking Pot";
         }
     }
     public static void resetAll()

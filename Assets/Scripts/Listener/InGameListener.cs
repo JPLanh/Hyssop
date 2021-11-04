@@ -191,6 +191,12 @@ public class InGameListener : MonoBehaviour, IServerListener
                         out_choppingBoard.storage.inventory.items = temp_wrapper;
                         //                    out_choppingBoard.onBoard = it_item;
                         break;
+                    case "Cooking Pot":
+                        //                    print(it_item.storageObj._id + ": load " + out_itemType + " " + it_item.ItemObj._id);
+                        out_access_go.TryGetComponent<cookingPot>(out cookingPot out_cookingPot);
+                        out_cookingPot.storage.inventory.items = temp_wrapper;
+                        //                    out_choppingBoard.onBoard = it_item;
+                        break;
                 }
             }
             //foreach (ItemExistanceDTOWrapper it_item in temp_wrapper)
@@ -261,6 +267,18 @@ public class InGameListener : MonoBehaviour, IServerListener
                             if (out_choppingBoard.choppingStatusUI.TryGetComponent<chopStatus>(out chopStatus out_chop))
                             {
                                 out_chop.init();
+                            }
+                        }
+                        break;
+                    case "Cooking Pot":
+                        out_go.TryGetComponent<cookingPot>(out cookingPot out_cookingPot);
+                        out_cookingPot.storage.inventory.refreshItem(getItem);
+
+                        if (out_cookingPot.cookingStatusUI != null && out_cookingPot.itemEntity.item.entityObj._id.Equals(getItem.storageObj._id))
+                        {
+                            if (out_cookingPot.cookingStatusUI.TryGetComponent<cookingUI>(out cookingUI out_cooking))
+                            {
+                                out_cooking.init();
                             }
                         }
                         break;

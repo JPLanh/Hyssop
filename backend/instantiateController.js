@@ -150,6 +150,9 @@ async function generateFarmItems(in_socket, in_name, in_area, in_type)
 //                    new areaIndex({"areaObj": in_area, "x": 18, "y": 38, "z": 1, "objectName": "Wooden Wall", "destructable": false, "pickable": false, "state": ""}).save();
 
             await instantiator.createNewAreaItem(in_socket, in_name, "Wooden Chopping Board", 0, in_area, 18, 1, 38, 0, 0, 0, 0, null)
+
+            new areaIndex({"areaObj": in_area, "x": 16, "y": 38, "z": 0, "objectName": "Stove", "destructable": false, "pickable": false, "state": ""}).save();
+            await instantiator.createNewAreaItem(in_socket, in_name, "Cooking Pot", 0, in_area, 16, 1, 38, 0, 0, 0, 0, null)
             await instantiator.createNewAreaItem(in_socket, in_name, "Basic Fridge", 0, in_area, 23, 0, 38, 0, 90, 0, 0, null)
             await instantiator.createNewAreaItem(in_socket, in_name, "Basic Fridge", 0, in_area, 23, 0, 35, 0, 90, 0, 0, null)
 
@@ -617,6 +620,9 @@ exports.instantiateDatabase = async function()
         return await new itemDatabase({"itemName": "Wooden Wall","itemType": "Wall","maxDurability": 100,"maxCapacity": 0}).save()
     })
     .then(async () => {
+        return await new itemDatabase({"itemName": "Stove","itemType": "Stove","maxDurability": 100,"maxCapacity": 0}).save()
+    })
+    .then(async () => {
         return await new itemDatabase({"itemName": "Wooden Slab","itemType": "Slab","maxDurability": 100,"maxCapacity": 0}).save()
     })
     .then(async () => {
@@ -654,6 +660,9 @@ exports.instantiateDatabase = async function()
     })
     .then(async () => {
         return await new itemDatabase({"itemName": "Wooden Chopping Board","itemType": "Chopping Board","maxDurability": 100,"maxCapacity": 0}).save()
+    })
+    .then(async () => {
+        return await new itemDatabase({"itemName": "Cooking Pot","itemType": "Cooking Pot","maxDurability": 100,"maxCapacity": 0}).save()
     })
     .then(async () => {
         return await new itemDatabase({"itemName": "Coffee cherry","itemType": "Produce","maxDurability": 100,"maxCapacity": 0}).save()
