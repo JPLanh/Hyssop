@@ -7,7 +7,6 @@ public class cookingUI : MonoBehaviour, IActionListener
     [SerializeField] private Transform cookCursor;
     [SerializeField] private Transform ladle;
     [SerializeField] private Transform ladleParent;
-    private bool cooking;
     private float cookTime;
     public cookingPot cookingPot;
     [SerializeField] private Transform objectGameList;
@@ -46,21 +45,32 @@ public class cookingUI : MonoBehaviour, IActionListener
             Destroy(it_chopItem.gameObject);
         }
 
-        int index_count = 0;
+        cookingPot.cookingcounter = 0;
         for (int ingrediantIndex = 0; ingrediantIndex < cookingPot.storage.inventory.items.Count; ingrediantIndex++)
         {
             for(int it_item_count = 0; it_item_count < cookingPot.storage.inventory.items[ingrediantIndex].ItemObj.quantity; it_item_count++)
             {
-                createLabel(cookingPot.storage.inventory.items[ingrediantIndex].ItemObj.itemName, index_count, this, objectGameList);
-                index_count++;
+                createLabel(cookingPot.storage.inventory.items[ingrediantIndex].ItemObj.itemName, cookingPot.cookingcounter, this, objectGameList);
+                cookingPot.cookingcounter++;
             }
         }
+        print(cookingPot.cookingcounter);
+    }
+
+    private void refreshUI()
+    {
+        stirMeter.localPosition = new Vector3(cookingPot.stirIndex * 3, 0f, 0f);
+        minStirMeter.localPosition = new Vector3(cookingPot.stirUnderstirThreshold * 3, 0f, 0f);
+        maxStirMeter.localPosition = new Vector3(cookingPot.stirOverstirThreshold * 3, 0f, 0f);
+
+        heatMeter.localPosition = new Vector3(0f, cookingPot.heatIndex * 3, 0f);
+        minHeatMeter.localPosition = new Vector3(0f, cookingPot.heatUndercookThreshold * 3, 0f);
+        maxHeatMeter.localPosition = new Vector3(0f, cookingPot.heatOvercookThreshold * 3, 0f);
+
     }
     // Update is called once per frame
     void Update()
     {
-        stirMeter.localPosition = new Vector3(cookingPot.stirIndex * 3, 0f, 0f);
-        heatMeter.localPosition = new Vector3(0f, cookingPot.heatIndex * 3, 0f);
         if (Input.GetButtonDown("Fire1"))
         {
             holding = true;
@@ -78,7 +88,7 @@ public class cookingUI : MonoBehaviour, IActionListener
 
         if (Input.GetButtonDown("Jump"))
         {
-            cooking = cooking ? false : true;
+            cookingPot.fireOn = cookingPot.fireOn ? false : true;
         }
 
         if (Input.GetAxis("Vertical") > 0)
@@ -103,6 +113,8 @@ public class cookingUI : MonoBehaviour, IActionListener
                 cookingPot.heatIndex -= 1;
 
         }
+
+        refreshUI();
 
         if (holding)
         {
@@ -244,8 +256,8 @@ public class cookingUI : MonoBehaviour, IActionListener
             Destroy(it_chopItem.gameObject);
         }
 
-        cookingPot.currentPlayer.unfreeze();
-        cookingPot.currentPlayer = null;
+        cookingPot.activePC.unfreeze();
+        cookingPot.activePC = null;
         Cursor.lockState = CursorLockMode.Locked;
         Destroy(gameObject);
     }

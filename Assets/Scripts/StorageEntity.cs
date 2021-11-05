@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class StorageEntity : MonoBehaviour, IInteractable, IMenu
+public class StorageEntity : MonoBehaviour, IInteractable, IMenu, IContainer
 {
     public Storage storage = new Storage();
     //    public backpack storage = new backpack();
@@ -141,5 +141,24 @@ public class StorageEntity : MonoBehaviour, IInteractable, IMenu
     public void reaction(PlayerController getInteractor)
     {
         throw new System.NotImplementedException();
+    }
+
+    public void init()
+    {
+        if (activePC != null)
+        {
+            activePC.canvas.tradeMenu.init();
+        }
+    }
+
+    public void setStorage(List<ItemExistanceDTOWrapper> in_item_list)
+    {
+        storage.inventory.items = in_item_list;
+    }
+
+    public void modifyStorage(ItemExistanceDTOWrapper in_item)
+    {
+        storage.inventory.refreshItem(in_item);
+        init();
     }
 }

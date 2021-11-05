@@ -59,8 +59,8 @@ public class chopStatus : MonoBehaviour, IActionListener
             else
             {
                 choppingBoard.choppedProduce.Add(choppingBoard.storage.inventory.items[it_counter]);
-                createItemBox(choppingBoard.choppedProduce, choppingBoard.choppedProduce.Count - 1, choppingBoard.currentPlayer, chopListGameObject);
-                createLabel(choppingBoard.choppedProduce, choppingBoard.choppedProduce.Count - 1, choppingBoard.currentPlayer, chopListGameObject);
+                createItemBox(choppingBoard.choppedProduce, choppingBoard.choppedProduce.Count - 1, choppingBoard.activePC, chopListGameObject);
+                createLabel(choppingBoard.choppedProduce, choppingBoard.choppedProduce.Count - 1, choppingBoard.activePC, chopListGameObject);
 
             }
         }
@@ -86,8 +86,8 @@ public class chopStatus : MonoBehaviour, IActionListener
             Destroy(it_chopItem.gameObject);
         }
 
-        choppingBoard.currentPlayer.unfreeze();
-        choppingBoard.currentPlayer = null;
+        choppingBoard.activePC.unfreeze();
+        choppingBoard.activePC = null;
         Cursor.lockState = CursorLockMode.Locked;
         Destroy(gameObject);
     }
@@ -101,7 +101,7 @@ public class chopStatus : MonoBehaviour, IActionListener
             transfer_dialog_go.transform.localPosition = new Vector3(0f, 0f, 0f);
             if (transfer_dialog_go.TryGetComponent<Transder_Dialog>(out Transder_Dialog out_transfer_dialog))
             {
-                out_transfer_dialog.transferLoad(in_item, in_from, in_to, choppingBoard.currentPlayer, "Transfer");
+                out_transfer_dialog.transferLoad(in_item, in_from, in_to, choppingBoard.activePC, "Transfer");
             }
         }
     }
@@ -258,11 +258,11 @@ public class chopStatus : MonoBehaviour, IActionListener
                 close();
                 break;
             case "Select":
-                tradeSelected(choppingBoard.choppedProduce[int.Parse(parsed[1])], choppingBoard.itemEntity.item, choppingBoard.currentPlayer.playerEntity);
+                tradeSelected(choppingBoard.choppedProduce[int.Parse(parsed[1])], choppingBoard.itemEntity.item, choppingBoard.activePC.playerEntity);
                 choppingBoard.refreshChoppedList();
                 break;
             case "Remove":
-                tradeSelected(choppingBoard.currentProduce, choppingBoard.itemEntity.item, choppingBoard.currentPlayer.playerEntity);
+                tradeSelected(choppingBoard.currentProduce, choppingBoard.itemEntity.item, choppingBoard.activePC.playerEntity);
                 choppingBoard.refreshChoppedList();
                 break;
 

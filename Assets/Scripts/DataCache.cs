@@ -10,9 +10,6 @@ using UnityEngine;
 public class DataCache : MonoBehaviour
 {
     private static Dictionary<string, GameObject> areaItems = new Dictionary<string, GameObject>();
-    private static Dictionary<string, GameObject> areaStorage = new Dictionary<string, GameObject>();
-    private static Dictionary<string, GameObject> areaChoppingBoard = new Dictionary<string, GameObject>();
-    private static Dictionary<string, GameObject> areaCookingPot = new Dictionary<string, GameObject>();
 
     //Local stuff
 
@@ -36,48 +33,19 @@ public class DataCache : MonoBehaviour
 
     public static void addNewAreaItem(EntityExistanceDTO<ItemDTO> in_item, string item_type, GameObject in_go)
     {
-        switch (item_type)
-        {
-            case "Storage":
-                areaStorage.Add(in_item.entityObj._id, in_go);
-                break;
-            case "Chopping Board":
-                areaChoppingBoard.Add(in_item.entityObj._id, in_go);
-                break;
-            case "Cooking Pot":
-                areaCookingPot.Add(in_item.entityObj._id, in_go);
-                break;
-            default:
-                areaItems.Add(in_item._id, in_go);
-                break;
-        }
-
+        areaItems.Add(in_item.entityObj._id, in_go);
     }
 
-    public static void getAreaItemByID(string in_id, out GameObject out_go, out string out_itemType)
+    public static void getAreaItemByID(string in_id, out GameObject out_go)
     {
         areaItems.TryGetValue(in_id, out out_go);
-        out_itemType = "Area Item";
-        if (out_go == null)
-        {
-            areaStorage.TryGetValue(in_id, out out_go);
-            out_itemType = "Storage";
-        }
-        if (out_go == null)
-        {
-            areaChoppingBoard.TryGetValue(in_id, out out_go);
-            out_itemType = "Chopping Board";
-        }
-        if (out_go == null)
-        {
-            areaCookingPot.TryGetValue(in_id, out out_go);
-            out_itemType = "Cooking Pot";
-        }
     }
+
     public static void resetAll()
     {
         areaItems.Clear();
     }
+
     // Start is called before the first frame update
     void Start()
     {

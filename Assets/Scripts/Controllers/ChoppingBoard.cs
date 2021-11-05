@@ -2,12 +2,12 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class ChoppingBoard : MonoBehaviour, IInteractable, ICanvas
+public class ChoppingBoard : MonoBehaviour, IInteractable, ICanvas, IContainer
 {
     public Storage storage = new Storage();
     [SerializeField] private CanvasHelper UICanvas;
     public GameObject choppingStatusUI;
-    public PlayerController currentPlayer;
+    public PlayerController activePC;
     public ItemEntity itemEntity;
     [System.NonSerialized] public ItemExistanceDTOWrapper currentProduce;
     [System.NonSerialized] public List<ItemExistanceDTOWrapper> choppedProduce;
@@ -19,7 +19,7 @@ public class ChoppingBoard : MonoBehaviour, IInteractable, ICanvas
 
     public void getPlayer(PlayerController in_player)
     {
-        currentPlayer = in_player;
+        activePC = in_player;
     }
 
     public void interact(PlayerController getInteractor, bool in_modified)
@@ -44,7 +44,7 @@ public class ChoppingBoard : MonoBehaviour, IInteractable, ICanvas
         } else
         {
             //move produce into the chop board "storage"
-            currentPlayer = getInteractor;
+            activePC = getInteractor;
             choppingStatusUI = Instantiate(Resources.Load<GameObject>("Chop Status"), new Vector3(0f, 0f, 0f), Quaternion.identity);
             //checkBoard(getInteractor);
             if (choppingStatusUI.TryGetComponent<chopStatus>(out chopStatus out_chop))
@@ -105,5 +105,32 @@ public class ChoppingBoard : MonoBehaviour, IInteractable, ICanvas
     void Update()
     {
         
+    }
+
+    public void init()
+    {
+        if (activePC != null && choppingStatusUI != null)
+        {
+            if (choppingStatusUI.TryGetComponent<chopStatus>(out chopStatus out_chop))
+            {
+                out_chop.init();
+            }
+        }
+    }
+
+    public void setStorage(List<ItemExistanceDTOWrapper> in_item_list)
+    {
+        storage.inventory.items = in_item_list;
+        refreshChoppedList();
+    }
+
+    public void modifyStorage(ItemExistanceDTOWrapper in_item)
+    {
+        storage.inventory.refreshItem(in_item);
+        if (in_item.ItemObj.itemType.Equals("Produce"))
+        {
+            currentProduce = in_item;
+        }
+        init();
     }
 }

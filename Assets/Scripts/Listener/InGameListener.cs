@@ -174,39 +174,13 @@ public class InGameListener : MonoBehaviour, IServerListener
             List<ItemExistanceDTOWrapper> temp_wrapper = Network.listOfItems.Dequeue();
             if (temp_wrapper.Count > 0)
             {
-                DataCache.getAreaItemByID(temp_wrapper[0].storageObj._id, out GameObject out_access_go, out string out_access_itemType);
-                print(out_access_itemType);
-                switch (out_access_itemType)
-                {
-                    case "Storage":
-                        //                    print(it_item.storageObj._id + ": load " + out_itemType + " " + it_item.ItemObj._id);
-                        out_access_go.TryGetComponent<StorageEntity>(out StorageEntity out_storage);
-                        //                        out_storage.storage.inventory.createItem(it_item);
-                        out_storage.storage.inventory.items = temp_wrapper;
-                        //                    out_storage.storage.inventory.items.Add(it_item);
-                        break;
-                    case "Chopping Board":
-                        //                    print(it_item.storageObj._id + ": load " + out_itemType + " " + it_item.ItemObj._id);
-                        out_access_go.TryGetComponent<ChoppingBoard>(out ChoppingBoard out_choppingBoard);
-                        out_choppingBoard.storage.inventory.items = temp_wrapper;
-                        //                    out_choppingBoard.onBoard = it_item;
-                        break;
-                    case "Cooking Pot":
-                        //                    print(it_item.storageObj._id + ": load " + out_itemType + " " + it_item.ItemObj._id);
-                        out_access_go.TryGetComponent<cookingPot>(out cookingPot out_cookingPot);
-                        out_cookingPot.storage.inventory.items = temp_wrapper;
-                        //                    out_choppingBoard.onBoard = it_item;
-                        break;
-                }
+                DataCache.getAreaItemByID(temp_wrapper[0].storageObj._id, out GameObject out_access_go);
+                out_access_go.TryGetComponent<IContainer>(out IContainer out_container);
+                out_container.setStorage(temp_wrapper);
+
             }
-            //foreach (ItemExistanceDTOWrapper it_item in temp_wrapper)
-            //{
-            //    DataCache.getAreaItemByID(it_item.storageObj._id, out GameObject out_go, out string out_itemType);
-            //}
         }
 
-        //if (!currentPlayer.canvas.tradeMenu.gameObject.activeInHierarchy)
-        //{
         if (Network.itemRetrieved.Count > 0)
         {
             ItemExistanceDTOWrapper getItem = Network.itemRetrieved.Peek();
@@ -217,8 +191,6 @@ public class InGameListener : MonoBehaviour, IServerListener
                 print("InGameListener : itemRetrieved] - " + currentPlayer.playerEntity.entityName + " , " + getItem.binder.entityName);
                 if (currentPlayer.playerEntity.entityName.Equals(getItem.binder.entityName))
                 {
-                    //                    currentPlayer.playerEntity.backpack.createItem(getItem);
-
                     ItemExistanceDTOWrapper has_item = currentPlayer.playerEntity.backpack.items.Find(x => x.ItemObj.itemName == getItem.ItemObj.itemName);
                     //print(JsonConvert.SerializeObject(has_item, settings));
                     //print(JsonConvert.SerializeObject(getItem, settings));
@@ -247,51 +219,12 @@ public class InGameListener : MonoBehaviour, IServerListener
             else if (getItem.storageObj != null)
             {
                 getItem = Network.itemRetrieved.Dequeue();
-                DataCache.getAreaItemByID(getItem.storageObj._id, out GameObject out_go, out string out_itemType);
-                switch (out_itemType)
-                {
-                    case "Storage":
-                        out_go.TryGetComponent<StorageEntity>(out StorageEntity out_storage);
-                        out_storage.storage.inventory.refreshItem(getItem);
-                        if (currentPlayer.canvas.tradeMenu.focusStorage.itemEntity.item.entityObj._id.Equals(getItem.storageObj._id))
-                        {
-                            currentPlayer.canvas.tradeMenu.init();
-                        }
-                        break;
-                    case "Chopping Board":
-                        out_go.TryGetComponent<ChoppingBoard>(out ChoppingBoard out_choppingBoard);
-                        out_choppingBoard.storage.inventory.refreshItem(getItem);
-
-                        if (out_choppingBoard.choppingStatusUI != null && out_choppingBoard.itemEntity.item.entityObj._id.Equals(getItem.storageObj._id))
-                        {
-                            if (out_choppingBoard.choppingStatusUI.TryGetComponent<chopStatus>(out chopStatus out_chop))
-                            {
-                                out_chop.init();
-                            }
-                        }
-                        break;
-                    case "Cooking Pot":
-                        out_go.TryGetComponent<cookingPot>(out cookingPot out_cookingPot);
-                        out_cookingPot.storage.inventory.refreshItem(getItem);
-
-                        if (out_cookingPot.cookingStatusUI != null && out_cookingPot.itemEntity.item.entityObj._id.Equals(getItem.storageObj._id))
-                        {
-                            if (out_cookingPot.cookingStatusUI.TryGetComponent<cookingUI>(out cookingUI out_cooking))
-                            {
-                                out_cooking.init();
-                            }
-                        }
-                        break;
-                }
+                DataCache.getAreaItemByID(getItem.storageObj._id, out GameObject out_go);
+                out_go.TryGetComponent<IContainer>(out IContainer out_container);
+                out_container.modifyStorage(getItem);
             }
         }
-        //}
     }
-
-    public void resetState()
-    {
-    }
-
 
     // Start is called before the first frame update
     void Start()
